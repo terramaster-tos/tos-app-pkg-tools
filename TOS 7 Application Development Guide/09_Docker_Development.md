@@ -87,7 +87,7 @@ x-app-meta:
 5. **Privileged Mode**: **Strictly prohibited**. The `user` field must be used to specify UID/GID.
 6. **Timezone**: Default configuration `TZ=Asia/Shanghai`. Users may modify as needed.
     Do not leave the timezone empty — inconsistent timestamps can cause data corruption in time-sensitive applications.
-7. **Container Name: **Optional.** This field is **not required** for TOS applications. 
+7. **Container Name**: **Optional.** This field is **not required** for TOS applications. 
    It is **recommended to omit** this field to allow Docker Compose to 
    auto-generate unique container names (format: `<compose_project>_<service>_<replica>`). 
    Explicitly setting `container_name` can cause naming conflicts in multi-container 
