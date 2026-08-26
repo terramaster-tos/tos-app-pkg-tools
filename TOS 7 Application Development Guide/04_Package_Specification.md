@@ -70,7 +70,7 @@ TOS 7 applications follow a clearly defined lifecycle:
 
 ### 4.2.1 Release Asset Naming Specification
 
-When uploading application packages to GitHub/Gitee Releases, the package file must follow the naming conventions below.
+When uploading application packages to GitHub/Gitee Releases, the package file must follow the naming conventions below.(see [Chapter 15 · Step 3](15_Publishing_Process.md#step-3-create-a-release-and-upload-package-assets) for detailed naming and format requirements)
 
 **Important:** Version numbers are **not** included in package file names. The version is specified through the Release tag/version when creating the Release. The platform will read the version from the Release metadata and verify it against the `version` field in `config.ini`.
 
