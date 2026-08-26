@@ -212,10 +212,10 @@ services:
 - Platform validation: all services must be healthy before the application is shown as "Running"
 
 **Health Check Failure Handling:**
-- After 3 consecutive health check failures, the container is marked as "unhealthy"
-- The Application Center displays the application as "Abnormal"
-- Docker's restart policy (`unless-stopped`) will attempt to restart unhealthy containers
-- If the container enters a restart loop, the platform will flag the application as needing developer attention
+- After 3 consecutive health check failures, the container is marked as `unhealthy`.
+- The Application Center will change the application status to "Not Enabled", and users need to manually click to enable it.
+- TOS 7 does not have a built-in Docker restart policy; if needed, developers should configure the required restart policy in `docker-compose.yml` themselves.
+- If the container encounters runtime errors, users can view the error logs through the Container Manager application.
 
 
 ← [Previous: Deb Development](08_Deb_Development.md) &nbsp;&nbsp;|&nbsp;&nbsp; [Next: Permission Model](10_Permission_Model.md) → &nbsp;&nbsp;|&nbsp;&nbsp; [📖 Back to Contents](../README.md)
