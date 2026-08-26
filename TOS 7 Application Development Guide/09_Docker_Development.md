@@ -86,6 +86,7 @@ x-app-meta:
    - Verify that the selected port is not in use on the TNAS before submission
 5. **Privileged Mode**: **Strictly prohibited**. The `user` field must be used to specify UID/GID.
 6. **Timezone**: Default configuration `TZ=Asia/Shanghai`. Users may modify as needed.
+    Do not leave the timezone empty — inconsistent timestamps can cause data corruption in time-sensitive applications.
 7. **Container Name**: Must match the application `id`
 8. **Restart Policy**: Use `unless-stopped` for normal services
 9. **Network Mode**: `network_mode: host` is **strictly prohibited**, except for system-level network tools. System-level network tools must clearly state the rationale at submission and may only use it after approval. Regular applications are strictly prohibited. Using host network mode breaks container isolation and poses security risks. Use port mapping instead:
@@ -93,13 +94,6 @@ x-app-meta:
    ports:
      - "8080:8080"
    ```
-10. **Timezone**: Container timezone must be explicitly configured:
-   ```yaml
-   environment:
-     - TZ=Asia/Shanghai
-     - TZ=${TZ:-Asia/Shanghai}  # Allow user override
-   ```
-    Do not leave the timezone empty — inconsistent timestamps can cause data corruption in time-sensitive applications.
 
 ### 9.4 Image and Security Requirements
 
