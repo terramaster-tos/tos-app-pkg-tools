@@ -97,13 +97,13 @@ x-app-meta:
 
 ### 9.4 Image and Security Requirements
 
-1. **Image Source (Docker Hub Only)**: **All Docker images must come from Docker Hub. Non-Docker Hub images will be rejected outright.** Images must be hosted on **Docker Hub** (hub.docker.com). Other image registries (such as ghcr.io, quay.io, self-hosted private registries, etc.) are not supported.
+1. **Image Source (Docker Hub Only)**: **All Docker images must come from Docker Hub. Non-Docker Hub images will be rejected outright.** Images must be hosted on **Docker Hub** (hub.docker.com). Other image registries (such as ghcr.io, quay.io, self-hosted private registries, etc.) are currently not supported.
 
    | Priority | Source | Example |
    |---|---|---|
    | 1 (Preferred) | Docker Hub official project images | `nginx`, `postgres` |
    | 2 | Docker Hub verified publishers | Docker Hub images with Verified badge |
-   | 3 | Docker Hub well-known community images | `linuxserver/jellyfin` (100M+ pulls, actively maintained) |
+   | 3 | Docker Hub well-known community images | `linuxserver/jellyfin` |
    | ❌ Rejected | Images from non-Docker Hub sources | Private registries, ghcr.io, quay.io, etc. |
    | ❌ Rejected | Unverified personal images on Docker Hub | Docker Hub images with few pulls, no documentation |
 
