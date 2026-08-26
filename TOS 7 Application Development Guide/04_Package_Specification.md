@@ -48,24 +48,15 @@ TOS 7 applications follow a clearly defined lifecycle:
 
 ### 4.2 Version Number Specification
 
-TOS 7 follows **Semantic Versioning (SemVer)**:
-
-```
-MAJOR.MINOR.PATCH
-
-MAJOR: Incompatible API changes
-MINOR: Backward-compatible new features
-PATCH: Backward-compatible bug fixes
-```
-
 **Rules:**
-1. Each submitted version number must be **strictly greater** than the previous version
-2. Version downgrades are prohibited
-3. Version numbers must be consistent across `version` in config.ini, `Version` in DEBIAN/control, and `version` in app.lang
-4. The platform validates version consistency upon submission
+1. Each submitted version number must be **strictly greater** than the previous version (e.g., 2.1 > 1.2.1, and 1.1.1 > 1.1).
+2. Version downgrades are prohibited.
+3. Version numbers must be consistent across `version` in config.ini, `Version` in DEBIAN/control, and `version` in app.lang.
+4. The platform validates version consistency upon submission.
 5. Maximum version number length: **20 characters**. Exceeding this will result in rejection.
-6. Allowed characters in version numbers: digits (`0-9`) and dots (`.`) only. Example: `"1.2.3"`
-7. Pre-release/beta versions must use the `"beta": true` field in config.ini, not version number suffixes.
+6. Allowed characters in version numbers: digits (`0-9`) and dots (`.`) only. Example: `"1.2.3"`.
+7. Version numbers may consist of 1 to 3 numeric segments (e.g., 1, 1.2, 1.2.3 are all valid).
+8. Pre-release/beta versions must use the `"beta": true` field in config.ini, not version number suffixes.
 
 **Beta Version Management Notes:**
 - The platform does not support version number suffixes (e.g., `-beta`, `-rc`, `-alpha`)
