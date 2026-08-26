@@ -55,7 +55,7 @@ TOS 7 applications follow a clearly defined lifecycle:
 4. The platform validates version consistency upon submission.
 5. Maximum version number length: **20 characters**. Exceeding this will result in rejection.
 6. Allowed characters in version numbers: digits (`0-9`) and dots (`.`) only. Example: `"1.2.3"`.
-7. Version numbers may consist of 1 to 3 numeric segments (e.g., 1, 1.2, 1.2.3 are all valid).
+7. Version numbers may consist of 1 to 3 numeric segments (e.g., 1, 1.2, 1.2.3 are all valid). Each numeric segment (major, minor, patch) can contain any number of digits, with no per‑segment length limit; however, the total version string length is still capped at 20 characters (see rule 5).
 8. Pre-release/beta versions must use the `"beta": true` field in config.ini, not version number suffixes.
 
 **Beta Version Management Notes:**
