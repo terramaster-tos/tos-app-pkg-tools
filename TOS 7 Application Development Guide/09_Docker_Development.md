@@ -52,9 +52,6 @@ services:
     image: <registry>/<image>:<tag>  # Images limited to Docker Hub only
     container_name: <appid>
     restart: unless-stopped
-    Volumes:
-      - /Volume*/DockerAppData/<appid>/config:/config
-      - /Volume*/DockerAppData/<appid>/data:/data
     ports:
       - "<host_port>:<container_port>"
     environment:
@@ -67,7 +64,7 @@ x-app-meta:
     protocol: http
 ```
 
-> **Note:** `*` in `/Volume*/` represents the volume number (e.g., Volume1, Volume2) chosen by the user during installation.
+> **Note:** Compose files are static configurations with no dynamic parameter matching.
 
 **Rules:**
 
@@ -171,9 +168,6 @@ services:
     image: linuxserver/myapp:1.0.0
     container_name: myapp-docker
     restart: unless-stopped
-    Volumes:
-      - /Volume*/DockerAppData/myapp-docker/config:/config
-      - /Volume*/DockerAppData/myapp-docker/data:/data
     ports:
       - "8080:8080"
     environment:
@@ -186,8 +180,6 @@ x-app-meta:
     port: 8080
     protocol: http
 ```
-
-> **Note:** `*` in `/Volume*/` represents the volume number (e.g., Volume1, Volume2) chosen by the user during installation. This application opens its WebUI externally, so `path` uses the `http://${ip}:<port>` format.
 
 **Multi-container Service Startup Order:**
 For applications with multiple services (e.g., Web + Database):
