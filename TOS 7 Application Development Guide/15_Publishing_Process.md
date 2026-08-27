@@ -46,7 +46,7 @@
 
    **Field Definitions:**
    - `<app_id>`: Must exactly match the `id` field in `config.ini`
-   - `<platform>`: Must exactly match the `platform` field in `config.ini` (`x86_64` or `aarch64`)
+   - `<platform>`: Must exactly match the `platform` field in `config.ini` and must be one of the two supported values (`x86_64` or `aarch64`). It does not accept multiple values or `"all"`. For multi-architecture support, each target architecture must be submitted as a separate build, and the package file name must include the appropriate architecture suffix.
    - `<package>`: Must match the `package` field in `config.ini` (for dual-package mode)
 
    > **Important:**
