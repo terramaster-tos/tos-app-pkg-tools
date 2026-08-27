@@ -48,46 +48,114 @@ TOS 7 applications follow a clearly defined lifecycle:
 
 ### 4.2 Version Number Specification
 
-**Rules:**
-1. Each submitted version number must be **strictly greater** than the previous version (e.g., 2.1 > 1.2.1, and 1.1.1 > 1.1).
-2. Version downgrades are prohibited.
-3. Version numbers must be consistent across `version` in config.ini, `Version` in DEBIAN/control, and `version` in app.lang.
-4. The platform validates version consistency upon submission.
-5. Maximum version number length: **20 characters**. Exceeding this will result in rejection.
-6. Allowed characters in version numbers: digits (`0-9`) and dots (`.`) only. Example: `"1.2.3"`.
-7. Version numbers may consist of 1 to 3 numeric segments (e.g., 1, 1.2, 1.2.3 are all valid). Each numeric segment (major, minor, patch) can contain any number of digits, with no per‑segment length limit; however, the total version string length is still capped at 20 characters (see rule 5).
-8. Pre-release/beta versions must use the `"beta": true` field in config.ini, not version number suffixes.
+#### 4.2.1 Version Number Rules
 
-**Beta Version Management Notes:**
-- The platform does not support version number suffixes (e.g., `-beta`, `-rc`, `-alpha`)
-- Multiple beta versions are distinguished by incrementing the patch number:
-  - First beta version → `"version": "1.0.0"` + `"beta": true`
-  - Second beta version → `"version": "1.0.1"` + `"beta": true`
-  - Third stable release → `"version": "1.0.2"` + `"beta": false`
-- Stable release: Set `"beta": false`; increment version number normally
-- Version rollback: The platform does not support rolling back to a "smaller" version number. If a rollback is needed, a rollback request must be submitted on the developer platform, and the platform will roll back the application to the previous stable version
-- See Appendix N - Beta Version Application Management for details
+**Format Rules:**
 
-### 4.2.1 Release Asset Naming Specification
+| Rule | Description |
+| :--- | :--- |
+| **Allowed characters** | Digits (`0-9`) and dots (`.`) only |
+| **Segments** | 1 to 3 numeric segments (e.g., `1`, `1.2`, `1.2.3` are all valid) |
+| **Segment length** | No per‑segment length limit; each segment can contain any number of digits |
+| **Total length** | Maximum **20 characters** (including dots). Exceeding this will result in rejection |
+| **Prohibited** | Alphabetic characters (`v1.2`), hyphens (`1.2.3-beta`), empty segments (`1..2`), or more than 3 segments (`1.2.3.4`) |
+| **Beta versions** | Must use the `"beta": true` field in `config.ini`; version number suffixes (e.g., `-beta`, `-rc`, `-alpha`) are **not** supported |
 
-When uploading application packages to GitHub/Gitee Releases, the package file must follow the naming conventions below.(see [Chapter 15 · Step 3](15_Publishing_Process.md#step-3-create-a-release-and-upload-package-assets) for detailed naming and format requirements)
+**Comparison Rules (Version Ordering):**
+
+Versions are compared **segment‑by‑segment as numbers**, from left to right:
+
+| Rule | Description |
+| :--- | :--- |
+| **Numeric comparison** | Each segment is compared as an integer (leading zeros are ignored, e.g., `01.2` equals `1.2`) |
+| **Missing segments** | Missing segments are treated as `0` (e.g., `1.2` equals `1.2.0`; `1` equals `1.0.0`) |
+| **Comparison result** | The first segment where values differ determines the order |
+
+**Comparison Examples:**
+
+| Comparison | Result | Reason |
+| :--- | :--- | :--- |
+| `1.10` vs `1.2` | `1.10` > `1.2` | Second segment: `10` > `2` |
+| `2.1` vs `1.9.9` | `2.1` > `1.9.9` | First segment: `2` > `1` |
+| `1.2` vs `1.2.0` | Equal | Missing segment treated as `0` |
+| `01.1` vs `1.0` | `01.1` > `1.0` | Ignore leading zeros: `1.1` > `1.0` |
+| `123` vs `111.3` | `123` > `111.3` | First segment: `123` > `111` |
+
+**Upgrade Constraints:**
+
+| Constraint | Description |
+| :--- | :--- |
+| **Strictly increasing** | Each newly submitted version **must be greater** than **all** existing historical versions of the same application (regardless of status: published, reviewing, rejected, draft) |
+| **Downgrade prohibited** | Version downgrades are strictly prohibited. Submitting a version number lower than or equal to any existing version will be rejected |
+| **Re-submission after rejection** | Rejected applications cannot be re-submitted with the same version number. A new, larger version number is required |
+
+**Validation Failure Examples:**
+
+| Attempted Submission | Existing Version(s) | Result |
+| :--- | :--- | :--- |
+| `1.0` | `1.0` (rejected) | ❌ Rejected (must be > `1.0`) |
+| `1.0.1` | `1.0` (published) | ✅ Accepted |
+| `1.2` | `1.10` (reviewing) | ❌ Rejected (`1.2` < `1.10`) |
+| `2.0.0` | `1.9.9` (rejected) + `1.9.8` (published) | ✅ Accepted (must be > `1.9.9`) |
+
+#### 4.2.2 Version Consistency Across Files
+
+The version number **must be exactly identical** (character‑for‑character) across all of the following locations:
+
+| Location | Field | Example |
+| :--- | :--- | :--- |
+| Developer Platform (submission form) | `Version To List` | `1.2.3` |
+| `config.ini` | `version` | `"version": "1.2.3"` |
+| `DEBIAN/control` (Deb apps only) | `Version` | `Version: 1.2.3` |
+| GitHub/Gitee Release tag | Tag name | `1.2.3`|
+
+> ⚠️ **Important:** The platform validates consistency upon submission. Any mismatch will result in an automated rejection. The version string in `config.ini` is considered the authoritative source.
+
+#### 4.2.3 Beta Version Management
+
+The platform does not support version number suffixes (e.g., `-beta`, `-rc`, `-alpha`). Use the `beta` flag in `config.ini` to mark beta releases:
+
+| Release Type | `config.ini` Entry | Platform Display |
+| :--- | :--- | :--- |
+| First beta | `"version": "1.0.0"`, `"beta": true` | `1.0.0` (Beta) |
+| Second beta | `"version": "1.0.1"`, `"beta": true` | `1.0.1` (Beta) |
+| Stable release | `"version": "1.0.2"`, `"beta": false` | `1.0.2` |
+
+**Beta Management Rules:**
+
+- Multiple beta versions are distinguished by incrementing the patch number (or any higher segment)
+- When promoting a beta to stable, simply set `"beta": false`; the version number can remain the same
+- The platform will not allow a stable release with a **lower** version number than any previously submitted beta version of the same app
+
+> For detailed beta application workflows, see **Appendix N - Beta Version Application Management**.
+
+#### 4.2.4 Release Asset Naming Specification
+
+When uploading application packages to GitHub/Gitee Releases, the package file must follow the naming conventions below. (See [Chapter 15 · Step 3](15_Publishing_Process.md#step-3-create-a-release-and-upload-package-assets) for detailed naming and format requirements.)
 
 **Important:** Version numbers are **not** included in package file names. The version is specified through the Release tag/version when creating the Release. The platform will read the version from the Release metadata and verify it against the `version` field in `config.ini`.
 
 | Application Type | Package Format | Naming Convention | Example |
-|---|---|---|---|
+| :--- | :--- | :--- | :--- |
 | Deb (Single Package) | `.deb` file | `<app_id>_<platform>.deb` | `myapp_x86_64.deb` |
 | Deb (Dual Package) | `.tar.gz` archive | `<app_id>_<platform>.tar.gz` | `myapp_x86_64.tar.gz` |
 | Docker Application | `.tar.gz` archive | `<app_id>.tar.gz` | `myapp.tar.gz` |
 
 **Field Definitions:**
-- `<app_id>`: Must exactly match the `id` field in `config.ini`
+
+- `<app_id>`: Must exactly match the `id` field in `config.ini` (case‑sensitive)
 - `<platform>`: Must exactly match the `platform` field in `config.ini` (`x86_64` or `aarch64`)
 
 **Release Tag Requirement:**
-- The Release tag/version **must** exactly match the `version` field in `config.ini` (format: `xx.yy.zzz`)
-- Example: If `config.ini.version = "1.0.0"`, the Release tag must be `v1.0.0` or `1.0.0`
+
+- The Release tag/version **must** exactly match the `version` field in `config.ini` (the platform automatically strips an optional `v` prefix for comparison)
+- **Examples:**
+  - If `config.ini.version = "1.0.0"`, the Release tag can be `1.0.0` or `v1.0.0` (both accepted)
+  - If `config.ini.version = "1.2.3"`, the Release tag **cannot** be `1.2` or `1.2.3-beta`
 - Mismatches between the Release version and `config.ini.version` will result in automated rejection
+
+#### 4.2.5 Version Number Validation Flow
+
 
 ### 4.3 Upgrades
 
