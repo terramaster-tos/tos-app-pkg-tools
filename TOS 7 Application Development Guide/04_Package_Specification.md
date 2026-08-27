@@ -154,8 +154,6 @@ When uploading application packages to GitHub/Gitee Releases, the package file m
   - If `config.ini.version = "1.2.3"`, the Release tag **cannot** be `1.2` or `1.2.3-beta`
 - Mismatches between the Release version and `config.ini.version` will result in automated rejection
 
-#### 4.2.5 Version Number Validation Flow
-
 
 ### 4.3 Upgrades
 
