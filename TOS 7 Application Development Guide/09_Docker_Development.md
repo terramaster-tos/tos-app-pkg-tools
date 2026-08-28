@@ -69,7 +69,7 @@ x-app-meta:
 **Rules:**
 
 1. **Version**: Must be compatible with Compose Spec 3.8 or higher
-2. **x-app-meta**: For Docker applications with a UI, the `x-app-meta` tag must be appended at the end of the `docker-compose.yml` file (after the services block), containing `web.port` (Web UI port number) and `web.protocol` (request protocol, typically `http`).
+2. **x-app-meta**: For Docker applications with a UI, the `x-app-meta` tag must be a top‑level key in the `docker-compose.yml` file, containing `web.port` (Web UI port) and `web.protocol` (request protocol, typically `http`).
    ```yaml
    x-app-meta:
      web:
