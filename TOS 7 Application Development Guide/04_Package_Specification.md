@@ -43,7 +43,7 @@ TOS 7 applications follow a clearly defined lifecycle:
 | Upgrade | App Center (user clicks "Update" button when a new version is available) | Pull new image, rebuild container | Zero-downtime or brief downtime | It is recommended that applications support smooth upgrades to avoid data interruption |
 | Uninstall | App Center (user clicks "Uninstall" button) | Remove container, optionally clean up volumes | All resources released | Users can choose whether to retain data volumes to avoid accidental data deletion |
 
-> Note: "App Center" refers to the built-in application management interface of the TOS system. Install/start/stop/upgrade/uninstall operations performed by users through this interface will trigger the corresponding lifecycle processes.In the current TOS version, upgrade is not supported for Docker applications.(See [Chapter 15 · Step 3]([15_Publishing_Process.md#step-3-create-a-release-and-upload-package-assets](https://github.com/terramaster-tos/tos-app-pkg-tools/blob/main/TOS%207%20Application%20Development%20Guide/09_Docker_Development.md)) for implementation details and data retention policies.)
+> Note: "App Center" refers to the built-in application management interface of the TOS system. Install/start/stop/upgrade/uninstall operations performed by users through this interface will trigger the corresponding lifecycle processes.In the current TOS version, upgrade is not supported for Docker applications.(See [Chapter 9 · Section 6](09_Docker_Development.md#96-lifecycle-operations-install-upgrade-uninstall) for implementation details and data retention policies.)
 
 
 ### 4.2 Version Number Specification
