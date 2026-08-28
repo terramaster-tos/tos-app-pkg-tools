@@ -76,21 +76,22 @@ x-app-meta:
        port: 8080
        protocol: http
    ```
-3. **Data Persistence**: All data directories must be mounted to host paths. Data stored only inside the container will be lost when the container is removed.
-4. **Port Mapping**:
+3. **Comments**: You can add comments in the `docker-compose.yml` file. In YAML, comments start with `#` and must be preceded by a space (e.g., `port: 8080 # Web UI port`). Comments may also appear on their own line. 
+4. **Data Persistence**: All data directories must be mounted to host paths. Data stored only inside the container will be lost when the container is removed.
+5. **Port Mapping**:
    - Disabled ports: 22, 80, 443, 8181, 5050 (system services)
    - Recommended range: 8000-19999
    - Verify that the selected port is not in use on the TNAS before submission
-5. **Privileged Mode**: **Strictly prohibited**. The `user` field must be used to specify UID/GID.
-6. **Timezone**: Default configuration `TZ=Asia/Shanghai`. Users may modify as needed.
+6. **Privileged Mode**: **Strictly prohibited**. The `user` field must be used to specify UID/GID.
+7. **Timezone**: Default configuration `TZ=Asia/Shanghai`. Users may modify as needed.
     Do not leave the timezone empty — inconsistent timestamps can cause data corruption in time-sensitive applications.
-7. **Container Name**: **Optional.** This field is **not required** for TOS applications. 
+8. **Container Name**: **Optional.** This field is **not required** for TOS applications. 
    It is **recommended to omit** this field to allow Docker Compose to 
    auto-generate unique container names (format: `<compose_project>_<service>_<replica>`). 
    Explicitly setting `container_name` can cause naming conflicts in multi-container 
    applications.
-8. **Restart Policy**: Use `unless-stopped` for normal services
-9. **Network Mode**: `network_mode: host` is **strictly prohibited**, except for system-level network tools. System-level network tools must clearly state the rationale at submission and may only use it after approval. Regular applications are strictly prohibited. Using host network mode breaks container isolation and poses security risks. Use port mapping instead:
+9. **Restart Policy**: Use `unless-stopped` for normal services
+10. **Network Mode**: `network_mode: host` is **strictly prohibited**, except for system-level network tools. System-level network tools must clearly state the rationale at submission and may only use it after approval. Regular applications are strictly prohibited. Using host network mode breaks container isolation and poses security risks. Use port mapping instead:
    ```yaml
    ports:
      - "8080:8080"
