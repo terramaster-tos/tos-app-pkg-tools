@@ -150,6 +150,7 @@ x-app-meta:
   "allow_open_in_mobile": false
 }
 ```
+- `<platform>`: Must exactly match the `platform` field in `config.ini` and must be one of the two supported values (`x86_64` or `aarch64`). It does not accept multiple values or `all`. For multi-architecture support, each target architecture must be submitted as a separate build, and the package file name must include the appropriate architecture suffix.
 
 #### docker-compose.yml
 
