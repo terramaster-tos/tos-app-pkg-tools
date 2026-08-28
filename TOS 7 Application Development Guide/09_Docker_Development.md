@@ -49,8 +49,8 @@ The Docker application is submitted as a `.tar.gz` archive. The archive must con
 version: "3.8"
 services:
   <appid>:
-    image: <registry>/<image>:<tag>  # Images limited to Docker Hub only
-    container_name: <appid>
+    image: <registry>/<image>:<tag>  
+    container_name: <container_name>
     restart: unless-stopped
     ports:
       - "<host_port>:<container_port>"
@@ -85,11 +85,7 @@ x-app-meta:
 6. **Privileged Mode**: **Strictly prohibited**. The `user` field must be used to specify UID/GID.
 7. **Timezone**: Default configuration `TZ=Asia/Shanghai`. Users may modify as needed.
     Do not leave the timezone empty — inconsistent timestamps can cause data corruption in time-sensitive applications.
-8. **Container Name**: **Optional.** This field is **not required** for TOS applications. 
-   It is **recommended to omit** this field to allow Docker Compose to 
-   auto-generate unique container names (format: `<compose_project>_<service>_<replica>`). 
-   Explicitly setting `container_name` can cause naming conflicts in multi-container 
-   applications.
+8. **Container Name**: You are free to set a custom name, provided it is globally unique on the Docker daemon. Duplicate names will result in runtime errors.
 9. **Restart Policy**: Use `unless-stopped` for normal services
 10. **Network Mode**: `network_mode: host` is **strictly prohibited**, except for system-level network tools. System-level network tools must clearly state the rationale at submission and may only use it after approval. Regular applications are strictly prohibited. Using host network mode breaks container isolation and poses security risks. Use port mapping instead:
    ```yaml
