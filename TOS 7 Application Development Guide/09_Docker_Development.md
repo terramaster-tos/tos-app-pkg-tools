@@ -205,5 +205,69 @@ services:
 - TOS 7 does not have a built-in Docker restart policy; if needed, developers should configure the required restart policy in `docker-compose.yml` themselves.
 - If the container encounters runtime errors, users can view the error logs through the Container Manager application.
 
+### 9.6 Lifecycle Operations (Install / Upgrade / Uninstall)
+
+This section describes the actual technical implementation of Docker application lifecycle operations on the TOS platform, based on internal platform behavior. Understanding these details is crucial for designing data backup and migration strategies.
+
+#### 9.6.1 Installation
+
+**Entry Chain**: `POST /app/install` → `BatchInstall` → `AppCenter.AutoInstall` → `Docker.AutoInstall`
+
+The platform executes the following steps sequentially (this is **not** `docker-compose up -d`):
+
+| Stage | Operation | Details |
+|---|---|---|
+| Download | Package download | Downloaded to `/usr/www/pkgs/<appID>.<ext>` with retry logic |
+| Extract | Archive extraction | Extracted to `<InstallPath>/@apps/DockerEngine/application/<appID>`; existing directory is removed first; single subdirectory is flattened automatically |
+| Project Name | Compose project resolution | Reads `compose_project` from `config.ini`; appends `_1/_2...` if project name conflicts; rewrites both `config.ini` and YAML accordingly |
+| Write Compose | Write compose file | Writes `docker-compose.yml` to the application directory |
+| Pull Images | **`compose pull`** | Pulls required images; resolves container user UID and runs `chown` on shared directories (DockerAppData and compose-mounted host paths) |
+| Clean Residue | **`compose down`** | Cleans up old containers after container name conflict resolution |
+| Create | **`compose create`** | Creates containers without starting them |
+| Finalize | Post-install tasks | Writes `install_data.json`, registers watcher, executes `post-install` script |
+| Start | **`compose start`** | Starts containers after 100% progress broadcast |
+
+**Key Point**: Installation executes **pull → down → create → start**, not `up -d`.
+
+#### 9.6.2 Upgrade
+
+**Current Status: Docker applications do NOT support platform upgrades.**
+
+- **Backend**: `Docker Controller.Update` explicitly returns the error `"update not supported for docker apps"` (`controller.go:44-47`). `POST /app/update` and `POST /app/update_all` both call this controller and thus fail for Docker apps.
+- **Frontend**: The "Update" button is hidden via `v-if` condition: `detailInfo.application_type !== 'docker'` (`app-detail.vue:173`).
+
+**Conclusion**:
+- There is no `pull + up -d` upgrade path.
+- To "upgrade" a Docker application, users must **uninstall and then reinstall** the application (which triggers the `AutoInstall` flow).
+
+#### 9.6.3 Uninstallation
+
+**Entry Chain**: `DELETE /app/remove` → `BatchRemove` (with `clean` parameter) → `UninstallApp` → `UninstallOptions.CleanData` → `Docker.UninstallApp` (dispatches to `composeUninstall` if `docker-compose.yml` exists, otherwise `legacyUninstall`).
+
+**Compose Application Uninstall**:
+
+| Stage | Operation |
+|---|---|
+| Down | `compose down` (**does not remove volumes by default**). If `clean=true`, adds `--rmi all` and calls `cleanComposeVolumes`. |
+| Post | Executes `post-uninstall -id <appID>`. |
+| Clean Config | Deletes the configuration directory `<VolumeN>/@apps/DockerEngine/application/<appID>` (config.ini, compose files, etc.). |
+| Finalize | `unwatchComposeProject` removes the watcher. |
+
+**Legacy Application Uninstall** (installed via `docker run`):
+- Executes `docker stop` and `docker rm -f` to remove containers.
+- If `clean=true`, runs `docker rmi -f` to remove images.
+- **No data directories are deleted under any circumstances.**
+
+#### 9.6.4 Data Retention Policy (DockerAppData)
+
+| Scenario | DockerAppData Result |
+|---|---|
+| Uninstall `clean=false` (Default) | **Retained**. `down` does not delete bind mounts or named volumes. |
+| Uninstall `clean=true` (Compose) | **Only** compose mount paths matching `/Volume*/DockerAppData/<appID>/...` are deleted (`os.RemoveAll`). **Named volumes are NOT deleted** (`down` does not include `-v`). Volumes mounted to other paths are NOT deleted. |
+| Uninstall `clean=true` (Legacy) | No data is deleted; only images are removed. |
+| Reinstall / Overwrite Install | Only the configuration directory `@apps/.../application/<appID>` is cleaned. `DockerAppData` remains untouched. |
+
+**Implication for Developers**: As long as users do not select "Delete data simultaneously" during uninstall, uninstallation and reinstallation will **never** touch `/Volume*/DockerAppData/<appID>`. Application data (including database files) can be safely retained across reinstallations.
+
 
 ← [Previous: Deb Development](08_Deb_Development.md) &nbsp;&nbsp;|&nbsp;&nbsp; [Next: Permission Model](10_Permission_Model.md) → &nbsp;&nbsp;|&nbsp;&nbsp; [📖 Back to Contents](../README.md)
