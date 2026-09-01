@@ -55,6 +55,7 @@
    > - The platform validates version consistency between the Release tag and `config.ini.version`. Mismatches will result in automated rejection.
    > - **The platform pulls packages exclusively from Releases, not from the repository root.**
    > - **You may upload both `x86_64` and `arm64` packages for the same application version in a single GitHub/Gitee Release. The platform will automatically pull the appropriate package based on the architecture you selected when creating the application (this feature is not yet implemented; for now, please ensure that each Release contains only one architecture package).**
+   > - **Do not upload multiple packages of different packaging formats (e.g., both `<app_id>_<platform>.deb` and `<app_id>_<platform>.tar.gz`) for the same application in a single Release.**
    > - **Only the formats and naming conventions listed above are supported.** Non-compliant names will result in automated rejection.
 
 4. **Include SHA-256 checksum files**
