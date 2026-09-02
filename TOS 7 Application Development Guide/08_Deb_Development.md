@@ -1234,13 +1234,15 @@ exit 0
 ### 8.15 Packaging and Verification
 
 **Deb Package Filename Naming Convention:**
-- Single-package mode: `<appid>_<version>_<arch>.deb`
-  - Example: `myapp_1.0.0_amd64.deb`
-- Data package: `<appid>_<version>_all.deb`
-  - Example: `myapp_1.0.0_all.deb`
-- Archive: `<appid>_<platform>.tar.gz` (dual-package mode contains two .deb files)
-  - Example: `weather_x86_64.tar.gz` (i.e., `AppID_Platform.tar.gz`)
-  - Naming rule: `config.ini.id_config.ini.platform.tar.gz`
+- Version numbers must not appear in any package filename. The version is exclusively managed through the Release tag and the `version` field in `config.ini`.
+- The following naming rules apply strictly based on the packaging hierarchy. Note that `<appid>` and `<platform>` are extracted from `config.ini`. `<platform>` must be either `x86_64` or `aarch64`.
+
+| Packaging Mode | Format | Example |
+| :--- | :--- | :--- |
+| Single-package | `<appid>_<platform>.deb` | `myapp_x86_64.deb` |
+| Dual-package (Archive) | `<appid>_<platform>.tar.gz` | `myapp_x86_64.tar.gz` |
+| Dual-package (Data Package) | `<appid>.deb` | `myapp.deb` |
+| Dual-package (Source Package) | `<package>.deb` | `myapp-backend.deb` |
 
 **Lintian Verification Requirements:**
 - All `Error` (E) level issues must be fixed before submission
@@ -1266,27 +1268,21 @@ The archive root must not contain subdirectories — `.deb` files must be at the
 **Step 1: Build the Deb Package**
 
 ```bash
-dpkg-deb --build ./<AppRootDir> ./<appid>_<version>_amd64.deb
+dpkg-deb --build ./<AppRootDir> ./<appid>_<platform>.deb
 ```
 
 **Step 2: Verify the Package**
 
 ```bash
-dpkg-deb -c <appid>_<version>_amd64.deb
-dpkg-deb -I <appid>_<version>_amd64.deb
-lintian <appid>_<version>_amd64.deb  # If lintian is available
+dpkg-deb -c <appid>_<platform>.deb
+dpkg-deb -I <appid>_<platform>.deb
+lintian <appid>_<platform>.deb  # If lintian is available
 ```
 
-**Step 3: Generate Checksum**
+**Step 3: Test Installation**
 
 ```bash
-sha256sum <appid>_<version>_amd64.deb > <appid>_<version>_amd64.deb.sha256
-```
-
-**Step 4: Test Installation**
-
-```bash
-sudo dpkg -i <appid>_<version>_amd64.deb
+sudo dpkg -i <appid>_<platform>.deb
 sudo systemctl status <system_id>
 sudo dpkg --purge <appid>    # Uninstall
 ```
@@ -1333,9 +1329,6 @@ tar -czf <appid>_<platform>.tar.gz <appid>.deb <package>.deb
 # Verify
 dpkg-deb -c <package>.deb && dpkg-deb -I <package>.deb
 dpkg-deb -c <appid>.deb && dpkg-deb -I <appid>.deb
-
-# Checksum
-sha256sum <appid>_<platform>.tar.gz > <appid>_<platform>.tar.gz.sha256
 
 # Test Installation
 sudo dpkg -i <package>.deb
