@@ -130,7 +130,7 @@ x-app-meta:
   "icon": "/images/icons/myapp-docker.svg",
   "publisher": "Developer Name",
   "exec": true,
-  "open path": true,
+  "open_path": true,
   "help": "https://github.com/example/myapp/wiki",
   "version": "1.0.0",
   "recommend": false,
