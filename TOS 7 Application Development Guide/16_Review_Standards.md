@@ -86,7 +86,7 @@
 - See 8.4 config.ini Specification
 
 **app.lang:**
-- All 14 language nodes present (en/zh-CN/zh-HK/ja/ko/fr/de/es/it/pt/ru/ar/th/vi)
+- All 14 language nodes present (zh-cn, zh-hk, en-us, fr-fr, de-de, it-it, es-es, hu-hu, ja-jp, ko-kr, pl-pl, ru-ru, tr-tr, pt-pt)
 - `name` / `descript` fields non-empty for all languages; empty fields must be filled with English translations
 - File encoding UTF-8 without BOM
 - All line endings LF (`\n`); CRLF (`\r\n`) prohibited
