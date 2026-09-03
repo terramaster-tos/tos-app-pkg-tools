@@ -502,7 +502,7 @@ Correct:
 4. **Version Incrementation**: Each new submission's version number must be greater than the previous version. Duplicates or downgrades are prohibited.
 5. **Category Limit**: Each application may have at most 3 categories.
 6. **TOS Version**: `low_version` must be TOS 7.0 or higher.
-7. **Field Consistency**: `version` must be consistent across config.ini, DEBIAN/control, and app.lang. `system_id` must match the systemd service filename. `package` must match the `Package` field in DEBIAN/control.
+7. **Field Consistency**: `version` must be consistent between config.ini and DEBIAN/control. `system_id` must match the systemd service filename. `package` must match the `Package` field in DEBIAN/control.
 
 **`path` Field Value Quick Reference Table:**
 
