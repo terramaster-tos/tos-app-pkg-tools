@@ -142,11 +142,13 @@ services:
 **Deb Applications:**
 ```ini
 # In systemd service file
-[Service]
-StartLimitBurst=3
+[Unit]
+StartLimitBurst=5
 StartLimitIntervalSec=60
 
-# Watchdog (if application supports it)
+[Service]
+Restart=on-failure
+RestartSec=10
 WatchdogSec=30
 ```
 
