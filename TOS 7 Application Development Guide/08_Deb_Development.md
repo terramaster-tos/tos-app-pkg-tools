@@ -664,11 +664,10 @@ Example:
 
 For systemd-managed services, prefer stdout/stderr for log output — systemd journal automatically captures both.
 
-**Service Crash Auto-Restart Limits:**
-- Maximum restart attempts: **5 times within 60 seconds**
-- Once the limit is exceeded, the service enters a failed state
-- The App Center displays the service as "Abnormal" after the restart limit is exceeded
-- **The parameters `StartLimitBurst=5` and `StartLimitIntervalSec=60` must be explicitly configured in the systemd service file.**
+**Service Crash Handling:**
+- When the main service crashes, the application status will be shown as **"Not Enabled"** in the App Center.
+- Developers may configure `Restart=` and `RestartSec=` in the service file according to their application's requirements. The App Center will execute the restart policy according to these developer-defined configurations.
+- To prevent runaway crash loops, configure `StartLimitBurst=` and `StartLimitIntervalSec=` as needed.
 
 #### 8.7.2 WebUI External Open (HTTP Port Mode)
 
