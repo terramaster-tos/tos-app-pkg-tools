@@ -977,6 +977,8 @@ ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/var/lib/<appid> /var/log/<appid>
 LimitNOFILE=65536
+Restart=on-failure
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
@@ -997,10 +999,10 @@ WantedBy=multi-user.target
 | `AmbientCapabilities` | `CAP_NET_BIND_SERVICE` | Conditional | Only needed when binding to ports below 1024 |
 | `ReadWritePaths` | `/var/lib/<appid> /var/log/<appid>` | ✅ Yes | Explicitly declare writable paths |
 | `LimitNOFILE` | `65536` | Recommended | File descriptor limit |
-| `StartLimitBurst` | `5` | Recommended | Maximum restart count within the interval |
-| `StartLimitIntervalSec` | `60` | Recommended | Restart limit interval (seconds) |
-
-> **⚠️ Important:** The service unit configuration file **must not configure `Restart` and `RestartSec` parameters**. The application's start, stop, and restart lifecycle is uniformly managed by the TOS App Center. Developer-configured auto-restart strategies may conflict with the platform management logic, leading to inconsistent application states. `StartLimitBurst` and `StartLimitIntervalSec` are retained and unaffected.
+| `StartLimitBurst` | `5` | Optional | Maximum restart attempts within the interval (set according to your needs) |
+| `StartLimitIntervalSec` | `60` | Optional | Restart limit interval in seconds (set according to your needs) |
+| `Restart` | `on-failure` | Optional | When to restart the service (e.g., `always`, `on-failure`, `no`). The App Center executes the restart policy defined here |
+| `RestartSec` | `10` | Optional | Time to wait before restarting the service (seconds) |
 
 ### 8.13 DEBIAN/control File
 
