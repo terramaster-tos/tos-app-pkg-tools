@@ -1150,10 +1150,8 @@ Description: Application data package - <App Name>
 #!/bin/bash
 set -e
 
-# Create a dedicated user (if it does not exist)
-if ! id -u <appid> > /dev/null 2>&1; then
-    useradd --system --no-create-home --shell /usr/sbin/nologin <appid> 2>/dev/null || true
-fi
+# NOTE: The application user is automatically created by the platform during installation.
+# DO NOT add useradd commands here. The platform ensures the user has non‑root privileges.
 
 # Create data directories
 mkdir -p /var/lib/<appid>
