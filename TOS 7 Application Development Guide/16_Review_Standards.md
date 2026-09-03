@@ -15,7 +15,7 @@
 | All required fields present (id/version/system_id/package/platform/type/name/icon/path, etc.) | Check against the required fields checklist item by item | 8.4.3 Key Rules |
 | type and open_path are mutually exclusive (both cannot exist) | Docker apps use the `type` field, Deb apps use the `open_path` field | 8.4.2 Field Reference |
 | path field must use `${ip}` placeholder; no hardcoded IP or domain | All URL-type path must be written as `https://${ip}:port/` | 8.4.3 Key Rules |
-| version / system_id / package version numbers are consistent | version numbers in config.ini, DEBIAN/control (or Docker compose tag), and app.lang must be unified | 4.2 Version Number Specification |
+| version / system_id / package version numbers are consistent | version numbers in config.ini and DEBIAN/control must match | 4.2 Version Number Specification |
 | platform field matches the actual submitted package architecture | e.g., if platform declares `x86_64`, binaries in the package must be x86_64 architecture | 8.4.2 Field Reference |
 
 #### app.lang Validation
