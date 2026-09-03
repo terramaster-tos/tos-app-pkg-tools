@@ -100,7 +100,7 @@ After submission, the platform automatically performs the following checks:
 - Language coverage validation (all 14 language nodes present)
 - Icon validation (SVG format, path matching)
 - Checksum verification (SHA-256 matches uploaded files)
-- Version consistency validation (config.ini / DEBIAN/control / app.lang version match; Docker apps only check config.ini and app.lang version consistency, no DEBIAN/control check needed)
+- Version consistency validation (config.ini and DEBIAN/control version match; Docker apps only check config.ini version consistency, no DEBIAN/control check needed)
 - Release tag vs config.ini.version consistency validation
 
 **Common causes of automated validation failure:**
