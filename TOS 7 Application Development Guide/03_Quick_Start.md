@@ -72,7 +72,7 @@ Before submitting to the review platform, verify the following items:
 - [ ] `app.lang` includes all 14 languages (untranslated languages filled with English)
 - [ ] Icon is in SVG format, stored at `/images/icons/<appid>.svg`
 - [ ] systemd service file `User` is not `root`
-- [ ] Version number is strictly incremented and consistent across `config.ini`, `DEBIAN/control`, and `app.lang`
+- [ ] Version number is strictly incremented and consistent across `config.ini` and `DEBIAN/control`
 - [ ] Full install/start/stop/uninstall workflow tested on a real TNAS device or alternative testing environment (see [Chapter 6 · Development Environment](06_Development_Environment.md#testing-environment-options))
 
 > 💡 **No TNAS hardware?** No problem. You can develop and test TOS applications without owning a physical TNAS device. As long as your development environment meets the recommended setup (see [Chapter 6 · Development Environment](06_Development_Environment.md#testing-environment-options)), alternatives such as Ubuntu 22.04 VM or a remote testing device work just as well.
