@@ -198,7 +198,7 @@ Each position provides a clear review opinion (approve/reject with specific reas
 | 13 | Dependency not preinstalled; `command not found` | Use Go/Python implementations or bundle static dependencies; do not depend on non-preinstalled environments like Node.js/Java | Deb only | 2.4 System Preinstalled Dependencies |
 | 14 | Docker app uses privileged mode | Remove `privileged: true`; use `cap_add` for fine-grained permissions instead | Docker only | 9.4 Image & Security Requirements |
 | 15 | Checksum mismatch or missing checksum file | Regenerate SHA-256 checksum; ensure the uploaded package matches the submitted declaration | All apps | 8.15 Packaging & Checksums |
-| 16 | config.ini / DEBIAN/control / app.lang version numbers are inconsistent | Unify version numbers across all three locations; recommend using scripts for automatic synchronization | All apps | 4.2 Version Number Specification |
+| 16 | config.ini and DEBIAN/control version numbers are inconsistent | Ensure version numbers match between config.ini and DEBIAN/control; recommend using scripts for automatic synchronization | Deb only | 4.2 Version Number Specification |
 | 17 | Docker app uses `network_mode: host` | Remove `network_mode: host`; use bridge network + port mapping instead | Docker only | 9.4 Image & Security Requirements |
 | 18 | Submitted package architecture does not match the `platform` field | Ensure the `platform` in config.ini matches the binary architecture in the package (x86_64 / aarch64) | All apps | 8.4.2 Field Reference |
 | 19 | app.lang has empty name/descript (in some language) | name and descript for all languages must be filled; untranslated languages use English as filler | All apps | 8.5.3 Field Descriptions |
