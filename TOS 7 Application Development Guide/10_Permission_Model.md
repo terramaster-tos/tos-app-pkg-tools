@@ -26,16 +26,11 @@ The platform provides a structured permission model for both Deb and Docker appl
 
 | Scenario | User | Description | Configuration Requirement |
 |---|---|---|---|
-| Dedicated User | `<appid>` | Must be used. Created by preinst script. Minimal permissions. | **Mandatory** |
+| Dedicated User | `<appid>` | Must be used. The platform automatically creates this user during installation with non‑root privileges and assigns a UID. | **Mandatory** |
 
-> **Mandatory Requirement:** All Deb applications must create a dedicated user (`<appid>`) and run the application as that user. Running as root is strictly prohibited. The dedicated user must be created in the `preinst` script to ensure minimal permissions at runtime. Application data directories (such as `/Volume*/@apps/<appid>/`) must be owned by the dedicated user to avoid permission errors or unauthorized access.
-
-**Creating a Dedicated User:**
-```bash
-# In preinst
-# The system will automatically assign a unique UID to the new user.
-useradd --system --no-create-home --shell /usr/sbin/nologin <appid>
-```
+> **Mandatory Requirement:** All Deb applications must set the `user` field in `config.ini` to a dedicated user name (e.g., `<appid>`). The platform will create the corresponding system user during installation, and the application will run with that user's privileges. Running as root is strictly prohibited.
+>
+> **⚠️ Important:** Developers MUST NOT manually create the user in lifecycle scripts (e.g., `preinst`). The developer's only responsibility regarding the user is to **set the user name** in `config.ini` and ensure it matches the `User=` field in the systemd service file.
 
 **Docker Applications:**
 
