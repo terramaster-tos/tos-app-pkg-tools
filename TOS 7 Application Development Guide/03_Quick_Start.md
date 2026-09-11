@@ -56,7 +56,7 @@ curl http://localhost:<port>/health
 
 **Step 5: Submit for Review**
 
-1. Push your installation package to the Release section of a public GitHub or Gitee repository.
+1. Create a public repository on GitHub or Gitee.
 2. Create a Release in your repository and upload the package file as a Release asset (see [Chapter 15 · Step 3](15_Publishing_Process.md#step-3-create-a-release-and-upload-package-assets) for detailed naming and format requirements)
 3. Create an application entry on the developer platform and link your GitHub/Gitee repository
 4. Submit the application for review; the platform will automatically pull the package from your Release and run automated validation, followed by manual review
