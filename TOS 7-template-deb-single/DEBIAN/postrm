@@ -7,10 +7,8 @@ APPID="myapp"
 systemctl daemon-reload
 
 if [ "$1" = "purge" ]; then
-    # Remove user
-    if id -u "${APPID}" > /dev/null 2>&1; then
-        userdel "${APPID}" 2>/dev/null || true
-    fi
+    # The application user is owned by the platform, not by this package, so it
+    # is not removed here (see 10_Permission_Model.md).
 
     # Clean up persistent data and app directory
     rm -rf "/var/lib/${APPID}" 2>/dev/null || true

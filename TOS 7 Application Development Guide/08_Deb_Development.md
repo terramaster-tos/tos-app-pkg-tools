@@ -975,7 +975,7 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/<appid> /var/log/<appid>
+ReadWritePaths=/var/lib/<appid>
 LimitNOFILE=65536
 Restart=on-failure
 RestartSec=10
@@ -997,7 +997,7 @@ WantedBy=multi-user.target
 | `TimeoutStartSec` | `30` | ✅ Yes | Service startup timeout (seconds) |
 | `TimeoutStopSec` | `10` | ✅ Yes | Graceful stop timeout (seconds) |
 | `AmbientCapabilities` | `CAP_NET_BIND_SERVICE` | Conditional | Only needed when binding to ports below 1024 |
-| `ReadWritePaths` | `/var/lib/<appid> /var/log/<appid>` | ✅ Yes | Explicitly declare writable paths |
+| `ReadWritePaths` | `/var/lib/<appid>` | ✅ Yes | Explicitly declare writable paths. **Every listed path must already exist when the service starts**, otherwise systemd aborts with `226/NAMESPACE` and the service never runs. Do **not** list `/var/log/<appid>` in a unit that also sets `PrivateTmp=true`: on TOS 7 `/var/log` is a symlink to `/tmp/log` (a tmpfs), so that path can never exist inside the unit's private mount namespace. Send logs to stdout/journal instead, or use an application-owned data path. |
 | `LimitNOFILE` | `65536` | Recommended | File descriptor limit |
 | `StartLimitBurst` | `5` | Optional | Maximum restart attempts within the interval (set according to your needs) |
 | `StartLimitIntervalSec` | `60` | Optional | Restart limit interval in seconds (set according to your needs) |

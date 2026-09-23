@@ -5,10 +5,14 @@ set -e
 APPID="myapp"
 APP_DIR="/usr/local/${APPID}"
 
-# Create dedicated user
-if ! id -u "${APPID}" > /dev/null 2>&1; then
-    useradd --system --no-create-home --shell /usr/sbin/nologin "${APPID}" 2>/dev/null || true
-fi
+# The application user is created by the platform during installation.
+# Do not add a useradd command here - see 08_Deb_Development.md section 8.14
+# (preinst) and 10_Permission_Model.md: "Developers MUST NOT manually create
+# the user in lifecycle scripts".
+
+# Runtime data directory. It must exist before the service starts: systemd
+# fails with 226/NAMESPACE if a path listed in ReadWritePaths is missing.
+mkdir -p "/var/lib/${APPID}"
 
 # Set permissions
 chown -R "${APPID}:${APPID}" "${APP_DIR}" 2>/dev/null || true

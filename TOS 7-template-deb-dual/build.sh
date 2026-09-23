@@ -85,14 +85,13 @@ cp source-pkg/DEBIAN/control "${SOURCE_STAGING}/DEBIAN/"
 sed -i "s/^Version:.*$/Version: ${VERSION}/" "${SOURCE_STAGING}/DEBIAN/control"
 sed -i "s/^Architecture:.*$/Architecture: ${DPKG_ARCH}/" "${SOURCE_STAGING}/DEBIAN/control"
 
-# postinst — create user
+# postinst — fix ownership.
+# The application user is created by the platform; do not add useradd here
+# (see 08_Deb_Development.md section 8.14 and 10_Permission_Model.md).
 cat > "${SOURCE_STAGING}/DEBIAN/postinst" << POSTINSTEOF
 #!/bin/sh
 set -e
 APPID="${APPID}"
-if ! id "\${APPID}" >/dev/null 2>&1; then
-    useradd -r -s /usr/sbin/nologin -d "/usr/local/\${APPID}" "\${APPID}"
-fi
 chown -R "\${APPID}:\${APPID}" "/usr/local/\${APPID}"
 POSTINSTEOF
 chmod 755 "${SOURCE_STAGING}/DEBIAN/postinst"

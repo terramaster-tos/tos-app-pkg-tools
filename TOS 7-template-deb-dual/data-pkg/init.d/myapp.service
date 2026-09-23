@@ -14,7 +14,10 @@ ExecStart=/usr/local/myapp/bin/myapp
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/myapp /var/log/myapp
+# Every path listed here must already exist when the service starts - systemd
+# aborts with 226/NAMESPACE if one is missing. /var/log/myapp is not listed
+# because nothing creates it (and on TOS 7 /var/log is a symlink into a tmpfs).
+ReadWritePaths=/var/lib/myapp
 LimitNOFILE=65536
 
 [Install]

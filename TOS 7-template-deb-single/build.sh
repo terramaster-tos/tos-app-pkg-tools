@@ -116,9 +116,13 @@ chmod 755               "${STAGING}/DEBIAN/"pre*
 # ---- Build .deb ----
 echo "  Building .deb package..."
 
-dpkg-deb --build "${STAGING}" "${OUTPUT_DIR}/${APPID}_${VERSION}_${DPKG_ARCH}.deb"
+# Release asset name, per the guide (ch. 08 section 8.15 / ch. 15):
+#   <appid>_<platform>.deb      e.g. myapp_x86_64.deb
+# The version is NOT part of the file name; the platform reads it from the
+# config.ini inside the package.
+dpkg-deb --build "${STAGING}" "${OUTPUT_DIR}/${APPID}_${PLATFORM}.deb"
 
 echo ""
 echo "=== Build complete ==="
-echo "  Output: ${OUTPUT_DIR}/${APPID}_${VERSION}_${DPKG_ARCH}.deb"
+echo "  Output: ${OUTPUT_DIR}/${APPID}_${PLATFORM}.deb"
 ls -lh "${OUTPUT_DIR}/"

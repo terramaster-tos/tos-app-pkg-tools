@@ -30,8 +30,13 @@ RestrictSUIDSGID=true
 RemoveIPC=true
 SystemCallArchitectures=native
 
-# Read-write paths
-ReadWritePaths=/usr/local/myapp /var/lib/myapp /var/log/myapp
+# Read-write paths.
+# Every path listed here must already exist when the service starts - systemd
+# aborts with 226/NAMESPACE ("Failed to set up mount namespacing") if one is missing.
+# /var/log is deliberately NOT listed: on TOS 7 /var/log is a symlink to /tmp/log
+# (a tmpfs), and PrivateTmp=true below gives the service a private, empty /tmp, so
+# /var/log/myapp can never exist inside the unit's mount namespace.
+ReadWritePaths=/usr/local/myapp /var/lib/myapp
 
 # Resource limits
 LimitNOFILE=65536
