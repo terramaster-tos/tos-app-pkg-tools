@@ -242,7 +242,7 @@ services:
 > **Recommended (strongly suggested):**
 > - `AmbientCapabilities` (only needed capabilities)
 > - `LimitNOFILE`, `LimitNPROC`
-> - `PrivateTmp=true`
+> - `PrivateTmp=true` (not for WebUI Internal Open applications — it breaks the `/var/api` proxy socket, see Chapter 8 §8.13.2)
 > - `PrivateDevices=true`
 >
 > **Optional (advanced hardening):**
@@ -406,7 +406,7 @@ Sections 12.9.1–12.9.5 describe paths that TOS, systemd, or App Center may cre
 
 1. **Do not write directly to the shared system `/tmp`.** A path shared with other host processes cannot be audited or safely cleaned up by your `postrm`.
 2. Use one of two application-owned alternatives instead:
-   - `PrivateTmp=true` in the systemd unit — the service gets an isolated `/tmp` that systemd wipes automatically on stop (Section 12.9.5 #2); use it for short-lived temp files that do not need to survive a restart.
+   - `PrivateTmp=true` in the systemd unit — the service gets an isolated `/tmp` that systemd wipes automatically on stop (Section 12.9.5 #2); use it for short-lived temp files that do not need to survive a restart. Do not enable it in a WebUI Internal Open application: `/var/api` and `/var/log` are symlinks into `/tmp`, so a private `/tmp` makes them unreachable (Chapter 8 §8.13.2).
    - `/Volume*/@apps/<appid>/data/tmp/` — an application-owned subdirectory on the data disk, for temp files that must survive a process restart (e.g., resumable downloads) or be inspected for debugging.
 3. **Clean up on startup.** Remove temp files left behind by a previous crash (for example `rm -f /Volume*/@apps/<appid>/data/tmp/*.part`) before creating new ones.
 4. **Bound temp file growth.** Document a maximum size or count for every temp path and enforce it in code; unbounded temp accumulation is not acceptable.
