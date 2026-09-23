@@ -1,6 +1,5 @@
 # TerraMaster Developer Platform · Agent API
 
-**Languages:** **English** · [简体中文](./README.zh-CN.md)
 
 The TerraMaster Developer Platform Agent API lets you manage apps and versions on the platform programmatically. It is intended for AI agents, command-line tools, and CI/CD pipelines that publish and maintain apps without going through the web portal.
 
