@@ -45,6 +45,10 @@ Based on your application type, use the corresponding GitHub template repository
 
 ```bash
 # Deb App: Build and test installation
+# ./<app_root_directory>/DEBIAN/control
+# ./<app_root_directory>/usr/local/<appid>/config.ini      (NOT at the deb root)
+# ./<app_root_directory>/usr/local/<appid>/<appid>.lang
+# ./<app_root_directory>/usr/local/<appid>/images/icons/<appid>.svg
 dpkg-deb --build ./<app_root_directory> ./<appid>_<version>_<arch>.deb
 sudo dpkg -i <appid>_<version>_<arch>.deb
 sudo systemctl status <system_id>
@@ -57,10 +61,11 @@ curl http://localhost:<port>/health
 **Step 5: Submit for Review**
 
 1. Create a public repository on GitHub or Gitee.
-2. Create a Release in your repository and upload the package file as a Release asset (see [Chapter 15 · Step 3](15_Publishing_Process.md#step-3-create-a-release-and-upload-package-assets) for detailed naming and format requirements)
-3. Create an application entry on the developer platform and link your GitHub/Gitee repository
-4. Submit the application for review; the platform will automatically pull the package from your Release and run automated validation, followed by manual review
-5. After approval, the application will be published to the TOS App Center
+2. Create a Release in your repository and upload the package file as a Release asset (see [Chapter 15 · Step 3](15_Publishing_Process.md#step-3-create-a-release-and-upload-package-assets) for the naming and format recommendations)
+3. Create an application entry on the developer platform — only the application ID, package type (Deb / Docker), architecture, and repository URL are required
+4. Submit a version: the platform lists the packages found in your repository's Releases, and you select the one to submit
+5. The platform downloads the package you selected from that Release and runs automated validation, followed by manual review
+6. After approval, the application will be published to the TOS App Center
 
 > 📝 **Note:** The developer platform automatically retrieves the application package from your GitHub/Gitee Release. No manual upload is required. For detailed package format, naming, and Release requirements, see [Chapter 15 · Publishing Process](15_Publishing_Process.md).
 
