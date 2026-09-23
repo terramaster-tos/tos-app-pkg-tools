@@ -100,16 +100,14 @@ Versions are compared **segment‑by‑segment as numbers**, from left to right:
 
 #### 4.2.2 Version Consistency Across Files
 
-The version number **must be exactly identical** (character‑for‑character) across all of the following locations:
+The version number **must be exactly identical** (character‑for‑character) across the following in-package locations:
 
 | Location | Field | Example |
 | :--- | :--- | :--- |
-| Developer Platform (submission form) | `Version To List` | `1.2.3` |
 | `config.ini` | `version` | `"version": "1.2.3"` |
 | `DEBIAN/control` (Deb apps only) | `Version` | `Version: 1.2.3` |
-| GitHub/Gitee Release tag | Tag name | `1.2.3`|
 
-> ⚠️ **Important:** The platform validates consistency upon submission. Any mismatch will result in an automated rejection. The version string in `config.ini` is considered the authoritative source.
+> ⚠️ **Important:** The version number is **not** entered manually on the Developer Platform — the platform reads it directly from the package you submit. The `version` field in `config.ini` is the authoritative source, and `DEBIAN/control` is still validated against it. The GitHub/Gitee Release tag is **not** used to determine the version.
 
 #### 4.2.3 Beta Version Management
 
@@ -127,15 +125,15 @@ The platform does not support version number suffixes (e.g., `-beta`, `-rc`, `-a
 - When promoting a beta to stable, simply set `"beta": false`; the version number can remain the same
 - The platform will not allow a stable release with a **lower** version number than any previously submitted beta version of the same app
 
-> For detailed beta application workflows, see **Appendix N - Beta Version Application Management**.
+> For detailed beta application workflows, see **Appendix M - Beta App Management**.
 
 #### 4.2.4 Release Asset Naming Specification
 
-When uploading application packages to GitHub/Gitee Releases, the package file must follow the naming conventions below. (See [Chapter 15 · Step 3](15_Publishing_Process.md#step-3-create-a-release-and-upload-package-assets) for detailed naming and format requirements.)
+When uploading application packages to GitHub/Gitee Releases, name the package files as follows. The **recommended** names are listed below. What the platform actually relies on is the **file extension**: a `.deb` file is treated as a single Deb package, and a `.tar.gz` archive as a dual-package Deb archive or a Docker package (matching the application type you declared when creating the application). (See [Chapter 15 · Step 3](15_Publishing_Process.md#step-3-create-a-release-and-upload-package-assets) for the full upload workflow.)
 
-**Important:** Version numbers are **not** included in package file names. The version is specified through the Release tag/version when creating the Release. The platform will read the version from the Release metadata and verify it against the `version` field in `config.ini`.
+**Version numbers:** the version is read from the `version` field inside `config.ini`. It does not need to be part of the file name, and the file name is **no longer** matched against a manually entered version number.
 
-| Application Type | Package Format | Naming Convention | Example |
+| Application Type | Package Format | Recommended Name | Example |
 | :--- | :--- | :--- | :--- |
 | Deb (Single Package) | `.deb` file | `<app_id>_<platform>.deb` | `myapp_x86_64.deb` |
 | Deb (Dual Package) | `.tar.gz` archive | `<app_id>_<platform>.tar.gz` | `myapp_x86_64.tar.gz` |
@@ -143,16 +141,14 @@ When uploading application packages to GitHub/Gitee Releases, the package file m
 
 **Field Definitions:**
 
-- `<app_id>`: Must exactly match the `id` field in `config.ini` (case‑sensitive)
-- `<platform>`: Must exactly match the `platform` field in `config.ini` and must be one of the two supported values (`x86_64` or `aarch64`). It does not accept multiple values or `all`. For multi-architecture support, each target architecture must be submitted as a separate build, and the package file name must include the appropriate architecture suffix.
+- `<app_id>`: Should exactly match the `id` field in `config.ini` (case‑sensitive)
+- `<platform>`: Should exactly match the `platform` field in `config.ini` and be one of the two supported values (`x86_64` or `aarch64`). It does not accept multiple values or `all`. For multi-architecture support, each target architecture must be submitted as a separate build, and it helps to include the architecture suffix in the file name so the correct asset is easy to pick when submitting.
 
-**Release Tag Requirement:**
+**Release Tag:**
 
-- The Release tag/version **must** exactly match the `version` field in `config.ini` (the platform automatically strips an optional `v` prefix for comparison)
-- **Examples:**
-  - If `config.ini.version = "1.0.0"`, the Release tag can be `1.0.0` or `v1.0.0` (both accepted)
-  - If `config.ini.version = "1.2.3"`, the Release tag **cannot** be `1.2` or `1.2.3-beta`
-- Mismatches between the Release version and `config.ini.version` will result in automated rejection
+- Every version you intend to submit must be published as a Release with a tag. When you submit a version, you select that tag on the Developer Platform, and the platform downloads the package from that Release for review.
+- The tag does **not** have to match the `version` field in `config.ini`. Naming the tag after the version (e.g. `1.0.0` or `v1.0.0`) is recommended for readability, but any tag is accepted.
+- The version itself always comes from `config.ini` inside the package, never from the tag.
 
 
 ### 4.3 Upgrades
