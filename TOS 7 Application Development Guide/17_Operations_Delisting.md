@@ -34,7 +34,7 @@ If serious issues arise after publishing:
 
 ### 17.3 Ongoing Operations
 
-1. **Version Updates**: Each new submission must increment the version number and include release notes.
+1. **Version Updates**: Include release notes with each submission. Increasing the version number is recommended — the App Center detects updates by comparing version numbers numerically, so a version that is not greater than the installed one will not reach existing users as an update.
 2. **Security Patches**: Promptly fix security vulnerabilities and compatibility issues.
 3. **Review Feedback**: Respond to platform rectification notices and complete fixes within the specified timeframe.
 4. **TOS Compatibility**: Continuously adapt to TOS system updates. Test on new TOS versions before user releases.
