@@ -57,8 +57,6 @@ The TOS 7 application ecosystem is evolving toward a **Container-first** model:
 ---
 
 
----
-
 ### 2.3 TOS System Pre-installed Dependencies
 
 TOS 7 employs a root filesystem compatible with Ubuntu 22.04. The system comes pre-installed with the following core dependencies:
