@@ -30,13 +30,13 @@
    **Step-by-step:**
    - Go to the "Releases" page of your repository
    - Click "Create a new release" (GitHub) or "新建发行版" (Gitee)
-   - **Tag version**: Must exactly match the `version` field in `config.ini` (format: `xx.yy.zzz`). Prefix `v` is optional but recommended (e.g., `v1.0.0` or `1.0.0`)
+   - **Tag version**: Any tag is accepted. Naming it after the version (e.g., `v1.0.0` or `1.0.0`) is recommended for readability, but it does not have to match `config.ini.version`. You will select this tag when submitting the version.
    - **Release title**: Recommended to use the same version string (e.g., `v1.0.0`)
    - **Attach binaries**: Upload the package file(s) as release assets following the naming conventions below
 
 3. **Package Asset Naming and Content Requirements**
 
-   The package file must follow the naming conventions below. Version numbers are **not** included in the file name — they are specified through the Release tag.
+   Name the package file as shown below. The platform identifies the package type from the file extension (`.deb` = single package, `.tar.gz` = dual-package archive or Docker package). The version is read from `config.ini`, so it does not need to appear in the file name. **The file name itself is not validated** — the recommended names below only make it easier to pick the right asset. Identity is checked after the package is downloaded and parsed, by comparing `config.ini` with the application information you entered on the Developer Platform.
 
    | Application Type | Required Asset Format | Naming Convention | Content Requirements |
    |---|---|---|---|
@@ -45,18 +45,17 @@
    | Docker Application | `.tar.gz` archive | `<app_id>.tar.gz` | Must contain `docker-compose.yml`, `config.ini`, `app.lang`, and icon files |
 
    **Field Definitions:**
-   - `<app_id>`: Must exactly match the `id` field in `config.ini`
-   - `<platform>`: Must exactly match the `platform` field in `config.ini` and must be one of the two supported values (`x86_64` or `aarch64`). It does not accept multiple values or `"all"`. For multi-architecture support, each target architecture must be submitted as a separate build, and the package file name must include the appropriate architecture suffix.
-   - `<package>`: Must match the `package` field in `config.ini` (for dual-package mode)
+   - `<app_id>`: Recommended to match the `id` field in `config.ini`
+   - `<platform>`: Recommended to match the `platform` field in `config.ini` and be one of the two supported values (`x86_64` or `aarch64`). It does not accept multiple values or `"all"`. For multi-architecture support, each target architecture must be submitted as a separate build, and it helps to include the architecture suffix in the file name so the correct asset is easy to pick when submitting. The platform does not read the architecture from the file name.
+   - `<package>`: Should match the `package` field in `config.ini` (for dual-package mode)
 
    > **Important:**
-   > - **Version numbers are not included in the package file name.** The version is specified via the Release tag.
-   > - **The Release tag must exactly match the `version` field in `config.ini`.**
-   > - The platform validates version consistency between the Release tag and `config.ini.version`. Mismatches will result in automated rejection.
+   > - **The version is read from the `version` field in `config.ini`.** It does not need to appear in the file name or in the Release tag.
    > - **The platform pulls packages exclusively from Releases, not from the repository root.**
-   > - **You may upload both `x86_64` and `arm64` packages for the same application version in a single GitHub/Gitee Release. The platform will automatically pull the appropriate package based on the architecture you selected when creating the application (this feature is not yet implemented; for now, please ensure that each Release contains only one architecture package).**
-   > - **Do not upload multiple packages of different packaging formats (e.g., both `<app_id>_<platform>.deb` and `<app_id>_<platform>.tar.gz`) for the same application ID in a single Release.**
-   > - **Only the formats and naming conventions listed above are supported.** Non-compliant names will result in automated rejection.
+   > - **You may upload multiple packages (e.g., different architectures) in a single GitHub/Gitee Release.** When you submit the version, the platform lists every package found in the repository's Releases, and you select the one to submit.
+   > - **Make sure the package you select matches the application type and architecture you declared when creating the application.** For example, do not submit an `aarch64` package for an application declared as `x86_64`.
+   > - **Do not mix packaging formats for the same application ID in a single Release** (e.g., both a `.deb` and a `.tar.gz`). The platform tells single-package Deb (`.deb`) apart from dual-package Deb / Docker (`.tar.gz`) by the file extension, so a Release should contain a single format.
+   > - **You are responsible for selecting the correct package.** Submitting the wrong package will cause the version to fail review.
 
 4. **Include SHA-256 checksum files**
 
@@ -70,27 +69,29 @@
 #### Step 4: Create an Application on the Developer Platform
 
 1. Log in to the Developer Platform, click [My Applications] → [Add Application]
-2. Fill in application information:
+2. Fill in the application information — **only four fields are required**:
    - **Application ID**: Must exactly match the `id` field in config.ini
-   - **Application Package Type**: Choose Docker or Deb package type
+   - **Application Package Type**: Choose `Deb` or `Docker`
+   - **Architecture**: Choose `x86_64` or `aarch64`
    - **Repository URL**: Provide the public repository URL (must be public, otherwise review cannot proceed)
 3. Confirm and submit the creation
 
-#### Step 5: Add a New Application Version
+> **Note:** Create the application first, then submit a version. No version number is entered at creation time — the platform takes the version from the package you select in the next step. After the package is downloaded and parsed, the platform compares the application information inside `config.ini` (`id`, `platform`, and package type) with the information you entered here and proceeds only if they match.
+
+#### Step 5: Submit a New Application Version
 
 1. Find the target application under [My Applications] and click [Version Management]
-2. Click [Add Version] and fill in the version number
-   - Version number format: strictly follow `xx.yy.zzz` (major.minor.patch)
-   - Historical version numbers cannot be reused
-   - Must match the `version` field in config.ini
-3. After submitting the version, the publishing application process begins
+2. Click [Add Version]. The platform calls the repository interface and returns **all installable packages found in the Releases** of the repository URL configured for the application
+3. Select the Release (tag) and the package file you want to submit
+   - Do **not** enter a version number manually — it is read from the `version` field inside the selected package
+   - Reusing or lowering a version number is no longer rejected, but the App Center detects updates by comparing versions numerically — a version that is not greater than the installed one will not reach existing users as an update
+   - The Release and its assets must remain available, because the platform downloads the package from the selected Release at review time
+4. After submitting the version, the publishing application process begins
 
-> **Version Consistency Requirement:**
-> The version number you enter in Step 5 must match:
-> 1. The `version` field in `config.ini`
-> 2. The Release tag version created in Step 3
+> **Version source and consistency:**
+> The version comes from the package itself, always from the `version` field in `config.ini`. There is no manually entered version number, and the Release tag is not required to match the version.
 >
-> **All three must be identical.** Mismatches will result in automated rejection.
+> The platform does **not** validate the version — not its format, not incrementation, and not whether it matches `DEBIAN/control`. Note however that the App Center detects updates by comparing version numbers numerically, so a version that is not greater than the installed one will not be offered to existing users as an update.
 
 #### Step 6: Platform Automated Validation
 
@@ -100,16 +101,14 @@ After submission, the platform automatically performs the following checks:
 - Language coverage validation (all 14 language nodes present)
 - Icon validation (SVG format, path matching)
 - Checksum verification (SHA-256 matches uploaded files)
-- Version consistency validation (config.ini and DEBIAN/control version match; Docker apps only check config.ini version consistency, no DEBIAN/control check needed)
-- Release tag vs config.ini.version consistency validation
+- Package type validation (the selected package's format matches the declared Deb / Docker application type)
 
 **Common causes of automated validation failure:**
 - config.ini contains comments or syntax errors
 - app.lang is missing language nodes
 - Icon not found or incorrect format
 - Checksum mismatch
-- Release tag does not match config.ini.version
-- Package file name does not follow the required naming convention
+- The selected package does not match the declared application type or architecture
 
 #### Step 7: Manual Review
 
