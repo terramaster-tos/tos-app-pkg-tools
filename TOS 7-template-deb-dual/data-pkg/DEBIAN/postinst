@@ -4,6 +4,10 @@ set -e
 
 APPID="myapp"
 
+# Runtime data directory. It must exist before the service starts: systemd
+# fails with 226/NAMESPACE if a path listed in ReadWritePaths is missing.
+mkdir -p "/var/lib/${APPID}"
+
 # Ensure correct permissions
 chmod 644 "/usr/local/${APPID}/config.ini" 2>/dev/null || true
 chmod 644 "/usr/local/${APPID}/${APPID}.lang" 2>/dev/null || true

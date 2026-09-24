@@ -975,7 +975,7 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/<appid> /var/log/<appid>
+ReadWritePaths=/var/lib/<appid>
 LimitNOFILE=65536
 Restart=on-failure
 RestartSec=10
@@ -997,12 +997,21 @@ WantedBy=multi-user.target
 | `TimeoutStartSec` | `30` | ✅ Yes | Service startup timeout (seconds) |
 | `TimeoutStopSec` | `10` | ✅ Yes | Graceful stop timeout (seconds) |
 | `AmbientCapabilities` | `CAP_NET_BIND_SERVICE` | Conditional | Only needed when binding to ports below 1024 |
-| `ReadWritePaths` | `/var/lib/<appid> /var/log/<appid>` | ✅ Yes | Explicitly declare writable paths |
+| `ReadWritePaths` | `/var/lib/<appid>` | ✅ Yes | Explicitly declare writable paths. **Every listed path must already exist when the service starts**, otherwise systemd aborts with `226/NAMESPACE` and the service never runs. See the note below — two platform paths live under `/tmp` and behave differently from ordinary directories. Add `/var/api` for WebUI Internal Open (iframe). |
 | `LimitNOFILE` | `65536` | Recommended | File descriptor limit |
 | `StartLimitBurst` | `5` | Optional | Maximum restart attempts within the interval (set according to your needs) |
 | `StartLimitIntervalSec` | `60` | Optional | Restart limit interval in seconds (set according to your needs) |
 | `Restart` | `on-failure` | Optional | When to restart the service (e.g., `always`, `on-failure`, `no`). The App Center executes the restart policy defined here |
 | `RestartSec` | `10` | Optional | Time to wait before restarting the service (seconds) |
+
+> **Two platform paths live under `/tmp`.** On TOS 7 both `/var/log` and `/var/api` are symlinks into `/tmp`, which is a tmpfs, so they must be handled differently from ordinary directories:
+>
+> | Path | Rule |
+> |---|---|
+> | `/var/log/<appid>` | **Never list it in `ReadWritePaths`.** `/var/log` is a symlink to `/tmp/log`, and with `PrivateTmp=true` the service sees a private, empty `/tmp`, so the path cannot exist and systemd aborts with `226/NAMESPACE` before `ExecStart`. Write logs to stdout/journal instead, or to an application-owned data path. |
+> | `/var/api` | **List it in `ReadWritePaths` for WebUI Internal Open (iframe).** The iframe proxy socket is `/var/api/<appid>.sock`, and `/var/api` is a symlink to `/tmp/api`. `ProtectSystem=strict` makes it read-only unless it is listed, and the service then fails with `Read-only file system` when creating the socket. |
+>
+> Because of `/var/api`, **a WebUI Internal Open application must not set `PrivateTmp=true`**: the symlink would dangle inside the private namespace
 
 ### 8.13 DEBIAN/control File
 

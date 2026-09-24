@@ -18,7 +18,8 @@ TimeoutStopSec=10
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-PrivateTmp=true
+# PrivateTmp is NOT set: it gives the service a private, empty /tmp, which breaks the
+# /var/api proxy socket below (/var/api is a symlink to /tmp/api on TOS 7).
 PrivateDevices=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
@@ -30,8 +31,14 @@ RestrictSUIDSGID=true
 RemoveIPC=true
 SystemCallArchitectures=native
 
-# Read-write paths
-ReadWritePaths=/usr/local/myapp /var/lib/myapp /var/log/myapp
+# Read-write paths.
+# Every path listed here must already exist when the service starts - systemd
+# aborts with 226/NAMESPACE ("Failed to set up mount namespacing") if one is missing.
+# /var/log/myapp is deliberately NOT listed: on TOS 7 /var/log is a symlink to /tmp/log
+# (a tmpfs), so it must never be declared writable - see the PrivateTmp note above.
+# /var/api holds the iframe proxy socket and is a symlink to /tmp/api, so ProtectSystem=strict
+# makes it read-only unless it is listed here.
+ReadWritePaths=/usr/local/myapp /var/lib/myapp /var/api
 
 # Resource limits
 LimitNOFILE=65536

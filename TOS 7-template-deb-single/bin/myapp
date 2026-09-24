@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env python3
 # MyApp — Example TOS 7 backend service (Python)
 # This is a placeholder. Replace with your actual application.
 
@@ -7,7 +7,8 @@ import os
 import signal
 import sys
 import json
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler
+from socketserver import UnixStreamServer
 
 APPID = "myapp"
 SOCKET_PATH = f"/var/api/{APPID}.sock"
@@ -67,7 +68,8 @@ def main():
     signal.signal(signal.SIGINT, handle_signal)
 
     # Start HTTP server on Unix Socket
-    server = HTTPServer(SOCKET_PATH, MyHandler)
+    # HTTPServer is a TCP server — it cannot bind a Unix socket path.
+    server = UnixStreamServer(SOCKET_PATH, MyHandler)
     os.chmod(SOCKET_PATH, 0o660)
     # Set socket owner to match service user
     try:

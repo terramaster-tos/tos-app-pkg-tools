@@ -11,7 +11,8 @@
   > **Note:** Developers do not need to manually create `DEBIAN/md5sums`; `dpkg-deb` automatically generates it during build.
 - Developers should provide SHA-256 checksums alongside deb packages:
   ```bash
-  sha256sum <appid>_<version>_amd64.deb > <appid>_<version>_amd64.deb.sha256
+  sha256sum <appid>_<platform>.deb > <appid>_<platform>.deb.sha256
+  # Example: sha256sum myapp_x86_64.deb > myapp_x86_64.deb.sha256
   ```
 
 **Docker Applications:**

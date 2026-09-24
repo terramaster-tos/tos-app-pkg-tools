@@ -172,6 +172,32 @@ journalctl -u <appid> -p err
 grep <appid> /var/log/syslog
 ```
 
+**When an installation from the App Center fails**
+
+The App Center reports only a generic failure, so the underlying `dpkg` error has to be
+read from the device. The full output is in the system log under the `application` tag,
+and the package-manager state transitions are in `dpkg.log`:
+
+```bash
+# The real dpkg error
+grep <appid> /var/log/syslog
+grep -E "application\[" /var/log/syslog | tail -40
+
+# install -> half-installed -> not-installed means dpkg unpacked and the platform rolled back
+cat /var/log/dpkg.log
+```
+
+Two failures are common and are invisible from the App Center UI:
+
+- `dpkg: error ... unable to create "<path>.dpkg-new": No such file or directory` —
+  an ancestor directory of a packaged file is missing from the data tarball. `dpkg`
+  does not create missing parent directories (unlike `tar`), so every directory that
+  appears in the package must have its own entry. Building with `dpkg-deb --build`
+  handles this; a hand-written archiver must add the entries explicitly.
+- `status=226/NAMESPACE ... Failed to set up mount namespacing` — a path in
+  `ReadWritePaths` does not exist, or points under `/var/log` while `PrivateTmp=true`
+  is set. The package installs successfully but the service never starts.
+
 **Docker Debugging**
 
 ```bash
