@@ -44,20 +44,22 @@ The platform provides a structured permission model for both Deb and Docker appl
 
 | Path | Owner | Permissions | Description |
 |---|---|---|---|
-| `/Volume*/@apps/<appid>/` | `<appid>:<appid>` | `755` | Application directory (service read-only) |
-| `/Volume*/@apps/<appid>/bin/` | `<appid>:<appid>` | `755` | Executables |
-| `/Volume*/@apps/<appid>/config/` | `<appid>:<appid>` | `750` | Configuration files (read-only for service) |
-| `/Volume*/@apps/<appid>/site/` | `<appid>:<appid>` | `755` | Web UI files |
-| `/Volume*/@apps/<appid>/data/` | `<appid>:<appid>` | `750` | Runtime data (read-write) |
-| `/Volume*/@apps/<appid>/logs/` | `<appid>:<appid>` | `750` | Application logs (read-write) |
+| `/usr/local/<appid>/` | `<appid>:<appid>` | `755` | Application directory (service read-only) |
+| `/usr/local/<appid>/bin/` | `<appid>:<appid>` | `755` | Executables |
+| `/usr/local/<appid>/config/` | `<appid>:<appid>` | `750` | Configuration files (read-only for service) |
+| `/usr/local/<appid>/site/` | `<appid>:<appid>` | `755` | Web UI files |
+| `/usr/local/<appid>/data/` | `<appid>:<appid>` | `750` | Runtime data (read-write) |
+| `/usr/local/<appid>/logs/` | `<appid>:<appid>` | `750` | Application logs (read-write) |
 
-> **Note 1:** `*` in `/Volume*/` represents the volume number (e.g., Volume1, Volume2) chosen by the user during installation.
+> **Note 1:** The paths above are the ones your application uses. After installation the platform maps `/usr/local/<appid>/` onto the volume the user chose, where the same directory physically lives at `/Volume<N>/@apps/<appid>/`. `*` is documentation notation for that volume number (e.g., Volume1, Volume2) — the platform does **not** expand it, so never write `/Volume*/…` into a compose file, a systemd unit, a lifecycle script, or any other machine-read configuration.
 
 > **Note 2:** Application binaries and configuration should be read-only for the service user. Only data and log directories should be writable.
 
 > **Note 3: Data Types**
-> - **Runtime data** (`/Volume*/@apps/<appid>/data/`) — Application-generated caches, temporary files, and runtime state. This data is managed by the application and can be safely regenerated.
-> - **User data** (shared folder created via `ter_share_add`) — Persistent business data (documents, photos, databases). This data must be stored in a shared folder under `/Volume*/` to allow user access via SMB/NFS.
+> - **Runtime data** (`/usr/local/<appid>/data/`) — Application-generated caches, temporary files, and runtime state. This data is managed by the application and can be safely regenerated.
+> - **User data** — Persistent business data (documents, photos, databases).
+>   - **Deb applications**: store it in a shared folder created via `ter_share_add`, so that users can reach it over SMB/NFS.
+>   - **Docker applications**: do **not** use shared folders. Their persistent business data lives in the container's volume mounts, which the platform resolves to `/Volume<N>/DockerAppData/<appid>/` (see Section 10.6).
 
 ### 10.5 Network Permissions
 
@@ -67,9 +69,11 @@ The platform provides a structured permission model for both Deb and Docker appl
 | Access Local Services | Allowed by default | Use `network_mode: host` or explicit linking | Minimize network exposure |
 | Outbound Connections | Allowed | Allowed | Outbound is unrestricted |
 
-### 10.6 Shared Folder Access
+### 10.6 Shared Folder Access (Deb Applications)
 
-TNAS shared folders are the primary data access mechanism. Applications requiring access to user data must:
+> **Scope:** This section applies to **Deb applications only**. Docker applications do **not** participate in the TNAS shared-folder mechanism: no shared folder is created for them, they must not call `ter_share_add` or declare `share_folders`, and all of their persistent business data is stored in the container's volume mounts, which the platform resolves to the application data root `/Volume<N>/DockerAppData/<appid>/` (see Chapter 9 §9.3 and Section 12.2).
+
+TNAS shared folders are the primary data access mechanism for Deb applications. Applications requiring access to user data must:
 
 1. **Create a shared folder** via `ter_share_add`:
 ```bash
@@ -81,19 +85,14 @@ ter_share_add -name <appid>-data -owner <appid>
 usermod -aG allusers <appid>
 ```
 
-3. **Docker applications** mount shared folders via volumes:
-```yaml
-Volumes:
-  - /Volume*/<shared_folder>:/data:rw    # Read-write access
-  - /Volume*/<shared_folder>:/media:ro   # Read-only access
-```
+> **Docker applications:** they do not use shared folders. Their persistent business data is stored in the container's volume mounts, which the platform resolves to `/Volume<N>/DockerAppData/<appid>/` (see Section 12.2). A Docker package must not contain shared-folder mount entries or `ter_share_add` calls.
 
 > **Important:** Applications must not directly modify shared folder permissions. Use the TOS shared folder management API or let users manually configure access permissions.
 
 
-### 10.6.1 Permission Request Process
+### 10.6.1 Permission Request Process (Deb Applications)
 
-When an application requires access to shared folders:
+When a Deb application requires access to shared folders:
 
 1. **Dedicated Application Folder** (Recommended):
    - Create via `ter_share_add` in postinst
@@ -105,21 +104,16 @@ When an application requires access to shared folders:
    - User authorizes folder access through TOS shared folder settings
    - Application declares read-only or read-write requirements in the permission declaration
 
-3. **Permission Format**:
-   ```yaml
-   # Docker volumes
-   - /Volume*/<shared_folder>:/data:rw   # Read-write access
-   - /Volume*/<shared_folder>:/media:ro  # Read-only access
-   ```
+3. **Declaration format**: the shared folder and its access mode are declared in the README permission table (see Section 10.8), for example `Shared Folder: <folder-name> (read-only)`. Docker applications always declare `Shared Folder: None` — they do not use shared folders.
 
 ### 10.7 System Resource Limits
 
 **Application Installation Path**
 
-Third-party applications are completely installed on **storage volumes** (data disks) at `/Volume*/@apps/<appid>/`, **not on the system disk (/)**.
+Third-party applications are completely installed on **storage volumes** (data disks), **not on the system disk (/)**. Your application works with this location through the logical path `/usr/local/<appid>/`; the platform resolves it to `/Volume<N>/@apps/<appid>/` on the volume the user chooses at installation.
 
-- `*` represents the volume number (e.g., Volume1, Volume2, etc.) chosen by the user during installation.
-- **All application files** — including binaries, configuration files, logs, scripts, and web UI files — are stored under `/Volume*/@apps/<appid>/`.
+- `*` is documentation notation only for the volume number (e.g., Volume1, Volume2) chosen at installation. The platform does **not** expand it — never write `/Volume*/…` into a compose file, a systemd unit, a lifecycle script, or any other machine-read configuration.
+- **All application files** — including binaries, configuration files, logs, scripts, and web UI files — live in the application directory, which your application sees as `/usr/local/<appid>/`.
 - Only a lightweight **registration/entry record** (used by TOS to recognize installed applications) resides on the system disk. This record occupies negligible space and does not pose any capacity concern.
 - Only system-built-in applications reside on the system disk (`/usr/local/system_app_data/`).
 
@@ -177,6 +171,8 @@ For transparency, applications should document their permission requirements in 
 | File System: `<your-data-path>` | Runtime data storage |
 | User: `<your-appid>` (system user) | Isolated service execution |
 | Shared Folder: None | No user data access required |
+
+> **Docker applications** always declare `Shared Folder: None`: they create and mount no TNAS shared folders, and all of their persistent data is stored in the application data root `/Volume<N>/DockerAppData/<appid>/`.
 
 > **Runtime file manifest:** This table declares *permissions*. You must additionally declare every file/directory your application *creates at runtime* (temp files, generated config, logs, caches) in the required manifest — see [Section 12.9.6](12_Best_Practices.md#1296-application-declared-runtime-file-manifest-required).
 
