@@ -7,7 +7,7 @@ This chapter helps developers complete their first TOS 7 application development
 
 - A TNAS device running TOS 7.0 (current stable/beta version) — **recommended but optional**
 
-  > 💡 **No TNAS hardware?** No problem. You can develop TOS applications without owning a physical TNAS device. As long as your development environment meets the recommended setup (see [Chapter 6 · Development Environment](06_Development_Environment.md#testing-environment-options)), you can build and test your application using alternatives such as Ubuntu 22.04 VM or a remote testing device.
+  > 💡 **No TNAS hardware?** No problem. You can develop TOS applications without owning a physical TNAS device. As long as your development environment meets the recommended setup (see [Chapter 6 · Development Environment](06_Development_Environment.md#68-testing-environment-options)), you can build and test your application using alternatives such as Ubuntu 22.04 VM or a remote testing device.
 
 - Basic Linux command line skills
 - GitHub or Gitee account (for code hosting and developer platform integration)
@@ -77,10 +77,10 @@ Before submitting to the review platform, verify the following items:
 - [ ] `app.lang` includes all 14 languages (untranslated languages filled with English)
 - [ ] Icon is in SVG format, stored at `/images/icons/<appid>.svg`
 - [ ] systemd service file `User` is not `root`
-- [ ] Version number is strictly incremented and consistent across `config.ini` and `DEBIAN/control`
-- [ ] Full install/start/stop/uninstall workflow tested on a real TNAS device or alternative testing environment (see [Chapter 6 · Development Environment](06_Development_Environment.md#testing-environment-options))
+- [ ] Version number increases numerically and is consistent across `config.ini` and `DEBIAN/control` (recommended — the platform does not validate this, but the App Center detects updates by comparing versions)
+- [ ] Full install/start/stop/uninstall workflow tested on a real TNAS device or alternative testing environment (see [Chapter 6 · Development Environment](06_Development_Environment.md#68-testing-environment-options))
 
-> 💡 **No TNAS hardware?** No problem. You can develop and test TOS applications without owning a physical TNAS device. As long as your development environment meets the recommended setup (see [Chapter 6 · Development Environment](06_Development_Environment.md#testing-environment-options)), alternatives such as Ubuntu 22.04 VM or a remote testing device work just as well.
+> 💡 **No TNAS hardware?** No problem. You can develop and test TOS applications without owning a physical TNAS device. As long as your development environment meets the recommended setup (see [Chapter 6 · Development Environment](06_Development_Environment.md#68-testing-environment-options)), alternatives such as Ubuntu 22.04 VM or a remote testing device work just as well.
 
 ## 3.4 Common Pitfalls to Avoid
 
@@ -100,7 +100,7 @@ grep -rl $'\r' *.sh *.py *.ini *.lang *.service *.conf 2>/dev/null
 sed -i 's/\r$//' *.sh *.py *.ini *.lang *.service *.conf
 ```
 
-For detailed specifications, see [Chapter 4 · Package Specification — Cross-Platform Line Ending](04_Package_Specification.md#cross-platform-line-ending).
+For detailed specifications, see [Chapter 4 · Package Specification — Cross-Platform Line Ending](04_Package_Specification.md#46-cross-platform-line-ending-specification-crlf-to-lf).
 
 ### Top 2: Missing Node.js Dependencies
 
@@ -108,7 +108,7 @@ For detailed specifications, see [Chapter 4 · Package Specification — Cross-P
 - **Root Cause:** TOS does not pre-install Node.js; Deb applications cannot directly depend on the Node.js runtime
 - **Solution:** Use Go to compile static binaries, or use Python 3.10 (pre-installed in the system)
 
-For more strategies, see [Chapter 2 · Architecture Strategy — Handling Non-Pre-installed Dependencies](02_Architecture_Strategy.md#handling-non-pre-installed-dependencies).
+For more strategies, see [Chapter 2 · Architecture Strategy — Handling Non-Pre-installed Dependencies](02_Architecture_Strategy.md#24-handling-non-pre-installed-dependencies).
 
 
 ← [Previous Chapter: Architecture Strategy](02_Architecture_Strategy.md) &nbsp;&nbsp;|&nbsp;&nbsp; [Next Chapter: Package Specification](04_Package_Specification.md) → &nbsp;&nbsp;|&nbsp;&nbsp; [📖 Back to Table of Contents](../README.md)
