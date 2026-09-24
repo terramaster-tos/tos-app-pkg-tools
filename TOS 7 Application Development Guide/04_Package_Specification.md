@@ -25,7 +25,7 @@ TOS 7 applications follow a clearly defined lifecycle:
 | Stage | Trigger | Script/Operation | Expected Behavior |
 |---|---|---|---|
 | Before Install | `dpkg -i` | `DEBIAN/preinst` | Create user, check prerequisites, create directories |
-| Install | `dpkg -i` | Package extraction | Files deployed according to the packaging specification (see Chapter 8); actual installation path on TOS 7 is `/Volume*/@apps/<appid>/` |
+| Install | `dpkg -i` | Package extraction | Files deployed according to the packaging specification (see Chapter 8); the application sees the directory as `/usr/local/<appid>/`, and the platform resolves it to `/Volume<N>/@apps/<appid>/` on the user-selected data volume |
 | After Install | `dpkg -i` | `DEBIAN/postinst` | Set permissions, enable service, start service |
 | Start | `systemctl start` | systemd / init.d | Application process starts |
 | Stop | `systemctl stop` | systemd / init.d | Application process gracefully stops |
@@ -50,20 +50,28 @@ TOS 7 applications follow a clearly defined lifecycle:
 
 #### 4.2.1 Version Number Rules
 
-**Format Rules:**
+> **Platform behaviour (current):** The Developer Platform **does not validate the version number**. Non-standard formats, duplicate versions, and version numbers that do not increase are **not rejected**. The platform simply reads the `version` field from `config.ini` and displays it in the App Center. The rules below are therefore **recommendations for compatibility**, not submission requirements.
+
+**Why the format still matters — update detection:**
+
+The TOS App Center currently determines whether an update is available by **comparing version numbers numerically, segment by segment**. This is a functional dependency rather than a submission rule:
+
+- If the new version is **numerically greater** than the installed one, users see the update prompt.
+- If it is **not greater** (equal, lower, or not numerically comparable such as `v2` or `1.0.0-rc1`), the update may **not be detected** — the package is still accepted, but it may never reach existing users.
+
+**Recommended format:**
 
 | Rule | Description |
 | :--- | :--- |
-| **Allowed characters** | Digits (`0-9`) and dots (`.`) only |
-| **Segments** | 1 to 3 numeric segments (e.g., `1`, `1.2`, `1.2.3` are all valid) |
-| **Segment length** | No per‑segment length limit; each segment can contain any number of digits |
-| **Total length** | Maximum **20 characters** (including dots). Exceeding this will result in rejection |
-| **Prohibited** | Alphabetic characters (`v1.2`), hyphens (`1.2.3-beta`), empty segments (`1..2`), or more than 3 segments (`1.2.3.4`) |
-| **Beta versions** | Must use the `"beta": true` field in `config.ini`; version number suffixes (e.g., `-beta`, `-rc`, `-alpha`) are **not** supported |
+| **Characters** | Digits (`0-9`) and dots (`.`) are recommended. Letters and hyphens (e.g. `v1.2`, `1.2.3-beta`) cannot be compared numerically and may break update detection |
+| **Segments** | 1 to 3 numeric segments (e.g., `1`, `1.2`, `1.2.3`) |
+| **Segment length** | No per-segment length limit; each segment can contain any number of digits |
+| **Total length** | No length limit is enforced. Keeping the version string short (the previous limit was 20 characters) is still recommended |
+| **Beta versions** | Use the `"beta": true` field in `config.ini` to mark beta releases. Suffixes such as `-beta` / `-rc` / `-alpha` are not rejected, but they break numeric comparison |
 
 **Comparison Rules (Version Ordering):**
 
-Versions are compared **segment‑by‑segment as numbers**, from left to right:
+Versions are compared **segment-by-segment as numbers**, from left to right:
 
 | Rule | Description |
 | :--- | :--- |
@@ -81,37 +89,34 @@ Versions are compared **segment‑by‑segment as numbers**, from left to right:
 | `01.1` vs `1.0` | `01.1` > `1.0` | Ignore leading zeros: `1.1` > `1.0` |
 | `123` vs `111.3` | `123` > `111.3` | First segment: `123` > `111` |
 
-**Upgrade Constraints:**
+**Submission Outcomes (accepted vs. update-detected):**
 
-| Constraint | Description |
-| :--- | :--- |
-| **Strictly increasing** | Each newly submitted version **must be greater** than **all** existing historical versions of the same application (regardless of status: published, reviewing, rejected, draft) |
-| **Downgrade prohibited** | Version downgrades are strictly prohibited. Submitting a version number lower than or equal to any existing version will be rejected |
-| **Re-submission after rejection** | Rejected applications cannot be re-submitted with the same version number. A new, larger version number is required |
-
-**Validation Failure Examples:**
-
-| Attempted Submission | Existing Version(s) | Result |
+| Submitted Version | Existing Version(s) | Outcome |
 | :--- | :--- | :--- |
-| `1.0` | `1.0` (rejected) | ❌ Rejected (must be > `1.0`) |
-| `1.0.1` | `1.0` (published) | ✅ Accepted |
-| `1.2` | `1.10` (reviewing) | ❌ Rejected (`1.2` < `1.10`) |
-| `2.0.0` | `1.9.9` (rejected) + `1.9.8` (published) | ✅ Accepted (must be > `1.9.9`) |
+| `1.0` | `1.0` (published) | ✅ Accepted — but users already on `1.0` are shown no update |
+| `1.2` | `1.10` (published) | ✅ Accepted — but **not** recognised as an update (`1.2` < `1.10`) |
+| `1.0.1` | `1.0` (published) | ✅ Accepted — update prompt shown |
+| `2.0.0` | `1.9.9` (published) | ✅ Accepted — update prompt shown |
+| `1.0.0-rc1` | `1.0.0` (published) | ✅ Accepted — numeric comparison is unreliable; the update may not be detected |
 
 #### 4.2.2 Version Consistency Across Files
 
-The version number **must be exactly identical** (character‑for‑character) across the following in-package locations:
+The platform **does not** compare the version numbers inside a package against each other, and it does not require them to match. The version is read from `config.ini`.
 
-| Location | Field | Example |
+| Location | Field | Read by |
 | :--- | :--- | :--- |
-| `config.ini` | `version` | `"version": "1.2.3"` |
-| `DEBIAN/control` (Deb apps only) | `Version` | `Version: 1.2.3` |
+| `config.ini` | `version` | The Developer Platform and the TOS App Center — this is the version **displayed to users** |
+| `DEBIAN/control` (Deb apps only) | `Version` | The Debian package manager (`dpkg`) — this is the version **recorded by the system** |
 
-> ⚠️ **Important:** The version number is **not** entered manually on the Developer Platform — the platform reads it directly from the package you submit. The `version` field in `config.ini` is the authoritative source, and `DEBIAN/control` is still validated against it. The GitHub/Gitee Release tag is **not** used to determine the version.
+> **Still recommended: keep them consistent.** A mismatch causes no rejection, but it does cause a confusing installation — users would see one version in the App Center while `dpkg -l` reports another, which complicates upgrades and support.
+>
+> **Keep `DEBIAN/control` `Version` non-decreasing.** At the `dpkg` level, installing a package whose `Version` is lower than the installed one is refused (downgrade protection). This is package-manager behaviour and is independent of the Developer Platform.
+>
+> **Version source:** the version is not entered manually on the Developer Platform, and the GitHub/Gitee Release tag is **not** used to determine it — it always comes from the `version` field inside the package you select.
 
 #### 4.2.3 Beta Version Management
 
-The platform does not support version number suffixes (e.g., `-beta`, `-rc`, `-alpha`). Use the `beta` flag in `config.ini` to mark beta releases:
+Beta status is controlled by the `beta` flag in `config.ini`, not by the version string:
 
 | Release Type | `config.ini` Entry | Platform Display |
 | :--- | :--- | :--- |
@@ -119,17 +124,20 @@ The platform does not support version number suffixes (e.g., `-beta`, `-rc`, `-a
 | Second beta | `"version": "1.0.1"`, `"beta": true` | `1.0.1` (Beta) |
 | Stable release | `"version": "1.0.2"`, `"beta": false` | `1.0.2` |
 
-**Beta Management Rules:**
+**Beta Management Notes:**
 
-- Multiple beta versions are distinguished by incrementing the patch number (or any higher segment)
-- When promoting a beta to stable, simply set `"beta": false`; the version number can remain the same
-- The platform will not allow a stable release with a **lower** version number than any previously submitted beta version of the same app
+- Version suffixes such as `-beta`, `-rc`, or `-alpha` are **not rejected**, but they break numeric comparison. Use the `"beta": true` field instead so beta builds are still recognised as new versions by beta users.
+- Multiple beta versions are distinguished by increasing the numeric part (recommended: increment the patch segment).
+- When promoting a beta to stable, set `"beta": false`. The version number can remain unchanged; if you do increase it, beta users are also offered the update.
+- A stable release whose version number is lower than a previously submitted beta build will not be offered to users still on that beta build as an update.
 
 > For detailed beta application workflows, see **Appendix M - Beta App Management**.
 
 #### 4.2.4 Release Asset Naming Specification
 
 When uploading application packages to GitHub/Gitee Releases, name the package files as follows. The **recommended** names are listed below. What the platform actually relies on is the **file extension**: a `.deb` file is treated as a single Deb package, and a `.tar.gz` archive as a dual-package Deb archive or a Docker package (matching the application type you declared when creating the application). (See [Chapter 15 · Step 3](15_Publishing_Process.md#step-3-create-a-release-and-upload-package-assets) for the full upload workflow.)
+
+**The platform does not validate the package file name.** It no longer checks `<app_id>` or `<platform>` against the file name. Package identity is verified *after* the package is downloaded and parsed: the platform compares the `id`, `platform`, and package type inside `config.ini` with the application information you entered when creating the application. The recommended names below are therefore optional — they mainly make it easier for you to pick the correct asset from the list.
 
 **Version numbers:** the version is read from the `version` field inside `config.ini`. It does not need to be part of the file name, and the file name is **no longer** matched against a manually entered version number.
 
@@ -141,8 +149,8 @@ When uploading application packages to GitHub/Gitee Releases, name the package f
 
 **Field Definitions:**
 
-- `<app_id>`: Should exactly match the `id` field in `config.ini` (case‑sensitive)
-- `<platform>`: Should exactly match the `platform` field in `config.ini` and be one of the two supported values (`x86_64` or `aarch64`). It does not accept multiple values or `all`. For multi-architecture support, each target architecture must be submitted as a separate build, and it helps to include the architecture suffix in the file name so the correct asset is easy to pick when submitting.
+- `<app_id>`: Recommended to match the `id` field in `config.ini` (case‑sensitive)
+- `<platform>`: Recommended to match the `platform` field in `config.ini` and be one of the two supported values (`x86_64` or `aarch64`). It does not accept multiple values or `all`. For multi-architecture support, each target architecture must be submitted as a separate build, and it helps to include the architecture suffix in the file name so the correct asset is easy to pick when submitting. The platform does not read the architecture from the file name — it verifies the architecture after parsing the package.
 
 **Release Tag:**
 
@@ -158,8 +166,8 @@ When uploading application packages to GitHub/Gitee Releases, name the package f
 - `postinst` receives `$1 = "configure"` parameter, with `$2` being the old version number
 - Use `$2` to detect the old version and perform data migration
 - Never delete user data during the upgrade process; only modify configuration formats or migrate data structures
-- Users store persistent business data in the `/Volume*/<appid>/` shared folder, which is created by the application via `ter_share_add`. The platform will not delete or overwrite user data in this shared folder during application upgrades or reinstallation
-- Runtime data (caches, temporary files) is stored in `/Volume*/@apps/<appid>/data/` and can be safely regenerated
+- Users store persistent business data in the `/Volume<N>/<appid>/` shared folder, which is created by the application via `ter_share_add`. The platform will not delete or overwrite user data in this shared folder during application upgrades or reinstallation
+- Runtime data (caches, temporary files) is stored in `/usr/local/<appid>/data/` and can be safely regenerated
 - It is recommended not to store data in system common directories such as `/etc`, `/var`, `/usr/bin`, as these directories may be overwritten by system updates or application upgrades, leading to data loss
 
 ```bash
@@ -184,8 +192,9 @@ esac
 **Docker Application Upgrades:**
 - Pull new image tags
 - Rebuild containers using existing volume mounts
-- Preserve data across upgrades through persistent volumes
+- Preserve data across upgrades through persistent volumes (the platform resolves them to the application data root `/Volume<N>/DockerAppData/<appid>/`)
 - Include migration logic in the application entry script if needed
+- Docker applications do **not** use TNAS shared folders: no shared folder is created for them, and all persistent business data stays in the container's volume mounts
 
 ### 4.4 Compatibility Matrix
 
@@ -269,36 +278,37 @@ git config --global core.autocrlf input
 
 > **Scope:** Sections 4.1–4.6 and Chapter 8 define the **static** package structure — the files shipped inside the `.deb`/`.tar.gz`. This section defines the **runtime footprint**: which additional files and directories appear on the TOS system after the application is installed and running. For the full per-path reference, lifecycle table, and self-review checklist, see [Section 12.9](12_Best_Practices.md#129-runtime-filesystem-layout).
 
-**Path model:** Deb payloads use logical `/usr/local/<appid>/` paths as defined in Chapter 8, while App Center installs third-party applications on the user-selected data volume at `/Volume*/@apps/<appid>/`. The mapping is platform-managed; developers must not assume that both paths are independent physical copies.
+**Path model:** `/usr/local/<appid>/` is the **path your application uses** — write it in your `config.ini`, service unit, lifecycle scripts, and program code. When the application is installed, the platform maps that directory onto the user-selected data volume, where it physically lives at `/Volume<N>/@apps/<appid>/`. `/Volume*/@apps/<appid>/` is **documentation notation for the resolved location on disk**; a developer cannot know in advance which volume a user will choose, so it must never be written into an application. Both views refer to the same files — the mapping is platform-managed, and developers must not assume that two independent physical copies exist.
 
 An application's footprint is divided into three categories that are treated differently on uninstall:
 
 | Category | Location | Examples | Uninstall Behavior |
 |---|---|---|---|
-| **Static install files** | `/Volume*/@apps/<appid>/` (logical Deb payload path: `/usr/local/<appid>/`) | config.ini, bin/, init.d/, nginx/, webui.bz2 | Managed by App Center/package lifecycle |
-| **Application runtime data** | `/Volume*/@apps/<appid>/data`, `/Volume*/@apps/<appid>/logs` | State, caches, logs, temporary data | Preserve required state across upgrade; remove only under an explicit cleanup policy |
-| **User business data** | `/Volume*/<appid>/` (shared folder) | documents, media, databases | **Never auto-deleted**; retained across upgrades and uninstall |
+| **Static install files** | `/usr/local/<appid>/` (physical location: `/Volume<N>/@apps/<appid>/`) | config.ini, bin/, init.d/, nginx/, webui.bz2 | Managed by App Center/package lifecycle |
+| **Application runtime data** | `/usr/local/<appid>/data`, `/usr/local/<appid>/logs` | State, caches, logs, temporary data | Preserve required state across upgrade; remove only under an explicit cleanup policy |
+| **User business data (Deb applications)** | `/Volume<N>/<appid>/` (shared folder created via `ter_share_add`) | documents, media, databases | **Never auto-deleted**; retained across upgrades and uninstall |
+| **User business data (Docker applications)** | `/Volume<N>/DockerAppData/<appid>/` (volume mounts) | databases, media, documents | Retained unless the user chooses to delete data on uninstall |
 
 **Runtime paths and conditions:**
 
 | Path | Requirement / Creator | Purpose | Cleanup |
 |---|---|---|---|
-| `/Volume*/@apps/<appid>/data`, `/Volume*/@apps/<appid>/logs` | Application/lifecycle script, when used | Writable state and logs on the data disk | Follow the documented package policy |
-| `/Volume*/<appid>/` | `ter_share_add` or `share_folders`, when user-visible data is needed | User business data (SMB/NFS) | **Retained** (never auto-deleted) |
+| `/usr/local/<appid>/data`, `/usr/local/<appid>/logs` | Application/lifecycle script, when used | Writable state and logs on the data disk | Follow the documented package policy |
+| `/Volume<N>/<appid>/` | Deb applications only: `ter_share_add` or `share_folders`, when user-visible data is needed | User business data (SMB/NFS) | **Retained** (never auto-deleted) |
 | `/var/api/<appid>.sock` | Required for iframe apps; created by the application | Unix socket for platform proxy (mode `0660`) | Remove stale socket before bind and clean package-owned residue |
-| `/var/lib/<appid>/`, `/var/log/<appid>/` | Optional compatibility paths; must be explicitly created | App-specific state or logs | Delete only when package-owned and documented |
+| `/var/lib/<appid>/`, `/var/log/<appid>/` | Legacy compatibility paths; **not required**. The documented location for application state and logs is `/usr/local/<appid>/data` and `/usr/local/<appid>/logs` | App-specific state or logs | Delete only when package-owned and documented |
 | `/run/<appid>/` | Only with `RuntimeDirectory=<appid>` | PID files and runtime sockets | systemd-managed |
 | Service-private `/tmp` | Only with `PrivateTmp=true` | Isolated temporary files | systemd-managed; physical host path is internal |
 | systemd enablement links | Platform/lifecycle script | Service boot registration | Platform/package-managed; do not assume a fixed `/etc/systemd/system/<id>.service` path |
-| `/Volume*/DockerAppData/<appid>/` | Docker apps | Persistent config & data volumes | Kept unless user chooses to remove volumes |
+| `/Volume<N>/DockerAppData/<appid>/` | Docker apps | Persistent config & data volumes | Kept unless user chooses to remove volumes |
 
 **Key rules:**
 
-1. `/etc`, `/usr`, and `/boot` are protected system directories. Third-party applications must not store writable application configuration there; use the application data directory on `/Volume*/`.
+1. `/etc`, `/boot`, and `/usr` locations other than `/usr/local/<appid>/` are protected system directories. Third-party applications must not store writable application configuration there; use the application data directory `/usr/local/<appid>/data/`, which the platform resolves onto the data disk.
 2. `PrivateTmp=true` and `RuntimeDirectory=<appid>` create conditional systemd-managed runtime views. Do not document their paths as unconditional artifacts.
 3. iframe applications must remove stale `/var/api/<appid>.sock` before binding.
-4. Never delete user data in `/Volume*/<appid>/` on upgrade or uninstall. Delete runtime data only when its owner and retention policy are explicitly defined.
-5. Docker application persistence must use volume mounts under `/Volume*/`. Docker Engine's host-side data root is platform-managed and must not be hardcoded or described as a container path.
+4. Never delete user data in `/Volume<N>/<appid>/` (Deb applications) or `/Volume<N>/DockerAppData/<appid>/` (Docker applications) on upgrade or uninstall. Delete runtime data only when its owner and retention policy are explicitly defined.
+5. Docker application persistence must use volume mounts, which the platform resolves to the application data root `/Volume<N>/DockerAppData/<appid>/`. Docker Engine's host-side data root is platform-managed and must not be hardcoded or described as a container path. Docker applications do not use TNAS shared folders.
 6. Every application must additionally declare, in its own README, every file it creates at runtime (temp files, generated config, logs, caches) using the required manifest template — see [Section 12.9.6](12_Best_Practices.md#1296-application-declared-runtime-file-manifest-required). Applications must not write to undocumented, arbitrary paths — especially `/tmp` — at runtime.
 
 ---
