@@ -46,17 +46,17 @@ Recommended app port range: **8000–19999** (excluding ports already occupied b
 
 | Path | Description |
 |---|---|
-| `/Volume*/@apps/<appid>/` | App installation directory (non-embedded apps) |
-| `/Volume*/@apps/<appid>/data/` | App runtime data (caches, temporary files) |
-| `/Volume*/@apps/<appid>/logs/` | App logs |
-| `/Volume*/DockerAppData/<appid>/` | Docker app data (config and business data) |
+| `/Volume*/@apps/<appid>/` | App installation directory (non-embedded apps) — the application sees it as `/usr/local/<appid>/`, resolved by the platform onto the user-selected volume |
+| `/Volume*/@apps/<appid>/data/` | App runtime data (caches, temporary files) — logical path for the app: `/usr/local/<appid>/data/` |
+| `/Volume*/@apps/<appid>/logs/` | App logs — logical path for the app: `/usr/local/<appid>/logs/` |
+| `/Volume<N>/DockerAppData/<appid>/` | Docker app data (config and business data) |
 | `/usr/local/system_app_data/<appid>/` | System embedded app directory (for built-in apps only) |
 | `/etc/systemd/system/<appid>.service` | Systemd service file |
 
-> **Note:** `*` in `/Volume*/` represents the volume number (e.g., Volume1, Volume2) chosen by the user during installation.
-> - For non-embedded apps (both official and third-party), all files are stored under `/Volume*/@apps/<appid>/`.
+> **Note:** These are the paths your application uses. After installation the platform maps `/usr/local/<appid>/` onto the volume the user chose at installation, where the same directory physically lives at `/Volume<N>/@apps/<appid>/`. `*` is documentation notation for that volume number (e.g., Volume1, Volume2) — the platform does **not** expand it, so never write `/Volume*/…` into a compose file, a systemd unit, a lifecycle script, or any other machine-read configuration.
+> - For non-embedded apps (both official and third-party), all files live in the application directory, which the application sees as `/usr/local/<appid>/`; the platform resolves it onto the user-selected volume at `/Volume<N>/@apps/<appid>/`.
 > - System embedded apps (e.g., GlobalSearch, StorageManager) reside on the system disk at `/usr/local/system_app_data/`.
-> - Docker app data is stored separately under `/Volume*/DockerAppData/<appid>/` via volume mounts.
+> - Docker app data is stored separately under `/Volume<N>/DockerAppData/<appid>/` via volume mounts. Docker applications do not use TNAS shared folders.
 
 ### Appendix D: TOS Systemd Targets
 
@@ -176,7 +176,9 @@ release_note = ""
 important = ""
 ```
 
-### Appendix G: Shared Folder API
+### Appendix G: Shared Folder API (Deb Applications)
+
+> **Deb applications only.** Docker applications do not participate in the TNAS shared-folder mechanism: no shared folder is created for them, they must not call `ter_share_add`, and all persistent business data is stored in the application data root `/Volume<N>/DockerAppData/<appid>/` through volume mounts.
 
 ```bash
 # Create a shared folder for the app
@@ -301,10 +303,10 @@ Complete downloadable config file templates for all app types are available on t
 |---|---|
 | **Visibility Scope** | Beta apps are only visible to users who have opted into beta testing |
 | **Visibility Control** | Set `"beta": true` in config.ini; the platform automatically restricts visibility |
-| **Graduation Process** | To graduate from Beta: set `"beta": false` and increment the version number. The version string should follow standard SemVer (do not use beta suffixes) |
+| **Graduation Process** | To graduate from Beta: set `"beta": false`. Increasing the version number is recommended so beta users receive the update; avoid a `-beta` / `-rc` suffix, which breaks numeric version comparison |
 | **Prohibited Behavior** | Beta apps must not be distributed as production releases; misleading users about beta status will result in rejection |
 | **Expiry & Delisting** | Beta apps not updated for 90 days may be automatically delisted |
-| **Version Number** | Use standard SemVer with the `"beta": true` field; do not use `-beta`, `-rc`, or other version string suffixes |
+| **Version Number** | Version numbers are free-form (the platform does not validate them); use the `"beta": true` field rather than a `-beta` / `-rc` suffix, and keep the number increasing so update detection keeps working |
 
 
 *This document is the official global specification for TOS7 app development and publishing. The specification will be continuously updated with TOS7 version iterations. Developers should refer to the latest version on the Developer Platform.*
