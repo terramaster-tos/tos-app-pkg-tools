@@ -14,7 +14,7 @@ Configure in GitHub repository Settings → Secrets and Variables → Actions:
 
 > Never hardcode credentials in workflow files. Always use GitHub Secrets.
 
-**Deb Applications** use the following GitHub Actions workflow. Replace `<appid>` with your actual application ID and `./app-root` with your Deb package root directory path.
+**Deb Applications** use the following GitHub Actions workflow. Replace `<appid>` with your actual application ID and `./app-root` with your Deb package root directory path. `./app-root` must contain `DEBIAN/` and the payload under `usr/local/<appid>/` — `config.ini`, `<appid>.lang`, and the icon must be at `usr/local/<appid>/` inside the payload, never at the deb root (see Section 8.2).
 
 ```yaml
 # .github/workflows/build-deb.yml
@@ -236,7 +236,7 @@ After a successful build:
 1. Create a GitHub Release with the deb package and checksums
 2. Update the repository's config.ini and app.lang if needed
 3. Submit the new version through the TNAS Developer Platform
-4. Associate the Release tag with the version submission
+4. When submitting the version on the Developer Platform, select the Release (tag) and the package you just uploaded
 
 ---
 
