@@ -50,8 +50,8 @@ sudo dpkg --purge <appid>        # Complete removal
 
 # 8. Verify cleanup (no residual files/services)
 systemctl list-unit-files | grep <appid>
-# Check runtime data directory
-ls /Volume*/@apps/<appid> 2>/dev/null
+# Check application directory (the path the app itself uses)
+ls -la /usr/local/<appid> 2>/dev/null
 # Check persistent data (shared folder)
 ls /Volume*/<appid> 2>/dev/null
 # Check system user
@@ -64,8 +64,8 @@ sudo dpkg -i <appid>_1.0.0_amd64.deb   # Upgrade to new version
 # Verify data is preserved and migrated
 ```
 
-> **Note:** `*` in `/Volume*/` represents the volume number (e.g., Volume1, Volume2) chosen by the user during installation.
-> - `/Volume*/@apps/<appid>/` — Application runtime data (logs, cache, temporary files)
+> **Note:** These are the paths your application uses. After installation the platform maps `/usr/local/<appid>/` onto the volume the user chose at installation, where the same directory physically lives at `/Volume<N>/@apps/<appid>/`. `*` is documentation notation for that volume number (e.g., Volume1, Volume2) — the platform does **not** expand it, so never write `/Volume*/…` into a compose file, a systemd unit, a lifecycle script, or any other machine-read configuration.
+> - `/usr/local/<appid>/` — Application directory: program files, logs, cache, temporary files
 > - `/Volume*/<appid>/` — Persistent user data (shared folder, created by the application)
 
 ### 13.2 Docker Application Testing
@@ -124,22 +124,22 @@ echo "--- Service Status ---"
 systemctl status "$APPID" 2>/dev/null || echo "Service not found"
 
 echo "--- Processes ---"
-pgrep -a -f "/Volume*/@apps/$APPID/" 2>/dev/null || echo "No related processes found"
+pgrep -a -f "@apps/$APPID/" 2>/dev/null || echo "No related processes found"
 
 echo "--- Ports ---"
 ss -tlnp | grep "$APPID"
 
-echo "--- Runtime Data Directory ---"
-ls -laR "/Volume*/@apps/$APPID/" 2>/dev/null
+echo "--- Application Directory ---"
+ls -laR /usr/local/$APPID/ 2>/dev/null
 
 echo "--- Persistent Data (Shared Folder) ---"
-ls -laR "/Volume*/$APPID/" 2>/dev/null
+ls -laR /Volume*/$APPID/ 2>/dev/null
 
 echo "--- Recent Errors ---"
 journalctl -u "$APPID" -p err --since "10 minutes ago" --no-pager
 
 echo "--- Disk Usage ---"
-du -sh "/Volume*/@apps/$APPID/" "/Volume*/$APPID/" 2>/dev/null
+du -sh /usr/local/$APPID/ /Volume*/$APPID/ 2>/dev/null
 
 echo "=== Debug Complete ==="
 ```
@@ -159,8 +159,8 @@ ss -tlnp | grep <port>
 # Check process details
 ps aux | grep <appid>
 
-# Check runtime data directory
-ls -laR /Volume*/@apps/<appid>/
+# Check application directory
+ls -laR /usr/local/<appid>/
 
 # Check persistent data (shared folder)
 ls -laR /Volume*/<appid>/
