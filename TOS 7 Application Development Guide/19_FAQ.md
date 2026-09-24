@@ -3,7 +3,7 @@
 ### 19.1 Review
 
 **Q: What should I do if my review is rejected?**  
-Review the rejection reason, correct it, and resubmit. Common rejection reasons include: JSON format errors, version number not incremented, missing language files, port conflicts. Refer to the Review Standards chapter for details.
+Review the rejection reason, correct it, and resubmit. Common rejection reasons include: JSON format errors, missing language files, port conflicts, icon format or icon path issues. Refer to the Review Standards chapter for details.
 
 **Q: How long does the review take?**  
 Usually 3–5 business days. Initial submissions may take longer (full manual review of all content). Update version reviews are faster (typically 1–3 business days).
@@ -20,10 +20,10 @@ It cannot be changed after creation. Please confirm the app ID carefully before 
 - Different apps use different ports; the platform does not auto-assign ports
 
 **Q: What are the version numbering rules?**  
-- Follow Semantic Versioning (SemVer): `major.minor.patch`
-- Each submission must be strictly greater than the previous version; downgrades are prohibited
-- For beta versions, use the `"beta": true` field; version string suffixes (-beta/-rc) are not supported
-- Maximum version string length: 20 characters
+- The platform does not enforce any: the version comes from the `version` field in `config.ini`, and non-standard formats, duplicates, and lower version numbers are not rejected
+- **However**, the App Center currently detects updates by comparing version numbers numerically — a version that is not greater than the installed one will not reach existing users as an update
+- Recommended: digits and dots only, increasing over time (e.g. `1.0.0` → `1.0.1`); SemVer `major.minor.patch` is a good default
+- For beta versions, use the `"beta": true` field instead of a `-beta` / `-rc` suffix
 
 **Q: Single-package or dual-package?**  
 - Starting from scratch → Single-package mode (all files integrated into one deb package)
