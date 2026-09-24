@@ -39,7 +39,7 @@ TOS 7 Deb applications support **two packaging methods**:
 
 **Dual-Package Mode Mandatory Constraints:**
 
-- **Version Consistency:** The `Version` fields of the data package and source package must be exactly the same; inconsistencies result in immediate rejection.
+- **Version Display (not a consistency requirement):** the platform does **not** require the two packages to carry the same `Version`, and does not compare them. The version shown in the App Center always comes from the `version` field in `config.ini` — make sure that field states the version you intend to release.
 - **Content Restrictions:** The data package (`<appid>.deb`) **must not contain any binary files**, otherwise it will be immediately rejected.
 - **Installation Order:** Automatically guaranteed by the APT repository dependency mechanism (data package `Depends` on the source package); no additional configuration required.
 - **Source Package Independence:** The deb source package must be independently installable on the TOS 7.0 system using the `dpkg -i` command.
@@ -72,6 +72,36 @@ All Deb application files are installed under the `/usr/local/<app_id>/` directo
     └── logs/                     # Logs
 ```
 
+**Physical Deb Payload Layout (Critical):**
+
+The App Center metadata parser reads `config.ini`, the language file, and the icon from **inside the deb's `data.tar`**, at the path `./usr/local/<appid>/`. It does **not** read them from the deb root.
+
+Therefore the deb payload itself must be laid out as follows — the metadata files live under `usr/local/<appid>/`, not beside `DEBIAN/`:
+
+```
+<appid>.deb                      # single-package mode
+├── DEBIAN/
+│   ├── control
+│   └── ...
+└── usr/
+    └── local/
+        └── <appid>/
+            ├── config.ini        # 【Required】parser reads it here
+            ├── <appid>.lang      # 【Required】parser reads it here
+            ├── images/
+            │   └── icons/
+            │       └── <appid>.svg   # 【Required】parser reads it here
+            ├── bin/
+            │   └── <binary_name>
+            ├── init.d/
+            │   └── <system_id>.service
+            └── ...
+```
+
+> ⚠️ **Common fatal mistake:** placing `config.ini`, `<appid>.lang`, or `images/` at the deb root (next to `DEBIAN/`). The parser looks under `usr/local/<appid>/` inside `data.tar`, finds nothing, and the submission fails with a metadata parse error (`application_type` unresolvable) — regardless of how correct the archive format is.
+
+> Dual-package mode: the **data package** (`<appid>.deb`) must carry these files at `usr/local/<appid>/` (see Section 8.17); the source package only carries binaries and lifecycle files.
+
 **Mandatory Correspondences:**
 
 ```text
@@ -101,6 +131,8 @@ config.ini.path            == "/<app_id>/" (WebUI Internal Open)
 | **No UI Service** | No page-related fields | Do not include `path`, `open_path`, or `type` fields |
 
 > **Mutual Exclusion Rule:** `type` and `open_path` must not appear together — iframe uses `"type": "iframe"`; external open uses `"open_path": true`; no UI uses neither. Mixing them will result in undefined behavior and rejection during review.
+>
+> **Note:** The directory trees in 8.3.1–8.3.3 are **deb payload paths** — inside the `.deb`, these files must live under `./usr/local/<app_id>/` (see Section 8.2 for the physical layout requirement).
 
 #### 8.3.1 WebUI Internal Open (iframe Embedding)
 
@@ -444,11 +476,11 @@ Below is the config.ini standard template, divided into three independent exampl
 | `width` | int | No | Default window width | Only effective when `open_path=false`. The width of the application page when opened, default 1180. |
 | `height` | int | No | Default window height | Only effective when `open_path=false`. The height of the application page when opened, default 680. |
 | `help` | string | No | Help documentation URL | Link to help documentation, wiki, or community tutorials. Leave empty if none. |
-| `version` | string | ✅ Yes | Application version number | Follows semantic versioning. Each submission must be unique and incremented. Example: `"1.0.0"`, `"2.3.1"`. |
+| `version` | string | ✅ Yes | Application version number, displayed in the App Center | The platform does not enforce a format. A digits-and-dots value that increases with every release (e.g. `"1.0.0"`, `"2.3.1"`) is recommended so the App Center can detect updates — see 4.2 Version Number Specification. |
 | `recommend` | bool | ✅ Yes | Whether the application is recommended | `recommend` — Recommendation flag, uniformly set by platform operations after review based on application quality. **Developers must always set this to `false` when submitting.** This field is managed by the platform; developers must not modify it to `true` on their own. |
 | `beta` | bool | ✅ Yes | Whether it is a beta version | `true` = beta version, only shown to test users; `false` = stable version, shown to all users. |
 | `low_version` | string | ✅ Yes | Minimum supported TOS version | Minimum supported TOS system version. Specifies the minimum TOS version on which the application can run normally. This is NOT the application's own version. Recommended: plain numeric version in MAJOR.MINOR or MAJOR.MINOR.PATCH format, e.g. 7.0, 7.1. Must be 7.0 or higher. |
-| `category` | []string | ✅ Yes | Application categories | Up to 3 categories, selected from the official category list (see [Appendix A](/20_Appendix.md#appendix-a-application-categories)). **The first category is the primary category** — it determines the default display section of the application. Arrange from most specific to most general. Exceeding the category limit results in rejection. |
+| `category` | []string | ✅ Yes | Application categories | Up to 3 categories, selected from the official category list (see [Appendix A](20_Appendix.md#appendix-a-application-categories)). **The first category is the primary category** — it determines the default display section of the application. Arrange from most specific to most general. Exceeding the category limit results in rejection. |
 | `depend` | []string | No | Dependency application list | Application IDs that must be installed before this application. Must be existing App Center application IDs. Dependencies are installed in list order. Example: `["DockerEngine"]`. No dependencies: `[]`. **Circular dependencies will be rejected.** |
 | `relation` | []string | No | Related application list | Application IDs displayed in the "Related Applications" module on the application details page. No mandatory dependency, display association only. No relations: `[]`. |
 | `platform` | string | ✅ Yes | Target architecture | `"x86_64"` or `"aarch64"`. Multi-architecture requires separate submissions. |
@@ -499,10 +531,10 @@ Correct:
 1. **IP Placeholder**: The `path` field must use `${ip}` (e.g., `http://${ip}:8686`). Hardcoding a fixed IP or domain is prohibited.
 2. **JSON Syntax**: Must be valid JSON. Comments (`//` or `/* */`), single quotes, or trailing commas are prohibited.
 3. **ID Uniqueness**: `id` must be globally unique. Duplicate IDs will be rejected.
-4. **Version Incrementation**: Each new submission's version number must be greater than the previous version. Duplicates or downgrades are prohibited.
+4. **Version Incrementation**: Increasing the version number on each submission is recommended. The platform no longer rejects duplicate or lower version numbers, but the App Center detects updates by comparing version numbers numerically — a version that is not greater than the installed one will not reach existing users as an update.
 5. **Category Limit**: Each application may have at most 3 categories.
 6. **TOS Version**: `low_version` must be TOS 7.0 or higher.
-7. **Field Consistency**: `version` must be consistent between config.ini and DEBIAN/control. `system_id` must match the systemd service filename. `package` must match the `Package` field in DEBIAN/control.
+7. **Field Consistency**: `system_id` must match the systemd service filename, and `package` must match the `Package` field in DEBIAN/control. Keeping `version` consistent between config.ini and DEBIAN/control is recommended but not validated by the platform — see 4.2.2.
 
 **`path` Field Value Quick Reference Table:**
 
@@ -975,7 +1007,7 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/<appid> /var/log/<appid>
+ReadWritePaths=/usr/local/<appid>/data /usr/local/<appid>/logs
 LimitNOFILE=65536
 Restart=on-failure
 RestartSec=10
@@ -997,7 +1029,7 @@ WantedBy=multi-user.target
 | `TimeoutStartSec` | `30` | ✅ Yes | Service startup timeout (seconds) |
 | `TimeoutStopSec` | `10` | ✅ Yes | Graceful stop timeout (seconds) |
 | `AmbientCapabilities` | `CAP_NET_BIND_SERVICE` | Conditional | Only needed when binding to ports below 1024 |
-| `ReadWritePaths` | `/var/lib/<appid> /var/log/<appid>` | ✅ Yes | Explicitly declare writable paths |
+| `ReadWritePaths` | `/usr/local/<appid>/data /usr/local/<appid>/logs` | ✅ Yes | Explicitly declare writable paths (the application's own data and log directories) |
 | `LimitNOFILE` | `65536` | Recommended | File descriptor limit |
 | `StartLimitBurst` | `5` | Optional | Maximum restart attempts within the interval (set according to your needs) |
 | `StartLimitIntervalSec` | `60` | Optional | Restart limit interval in seconds (set according to your needs) |
@@ -1153,9 +1185,9 @@ set -e
 # NOTE: The application user is automatically created by the platform during installation.
 # DO NOT add useradd commands here. The platform ensures the user has non‑root privileges.
 
-# Create data directories
-mkdir -p /var/lib/<appid>
-chown <appid>:<appid> /var/lib/<appid> 2>/dev/null || true
+# Create the application's writable data and log directories
+mkdir -p /usr/local/<appid>/data /usr/local/<appid>/logs
+chown <appid>:<appid> /usr/local/<appid>/data /usr/local/<appid>/logs 2>/dev/null || true
 
 # Create Unix Socket directory (WebUI Internal Open)
 mkdir -p /var/api
@@ -1171,7 +1203,7 @@ set -e
 
 # Set file permissions
 chown -R <appid>:<appid> /usr/local/<appid> 2>/dev/null || true
-chown -R <appid>:<appid> /var/lib/<appid> 2>/dev/null || true
+chown -R <appid>:<appid> /usr/local/<appid>/data /usr/local/<appid>/logs 2>/dev/null || true
 
 # Decompress webui.bz2 if it exists (WebUI applications)
 if [ -f /usr/local/<appid>/webui.bz2 ]; then
@@ -1217,7 +1249,7 @@ if [ "$1" = "purge" ]; then
     if id -u <appid> > /dev/null 2>&1; then
         userdel <appid> 2>/dev/null || true
     fi
-    rm -rf /var/lib/<appid>
+    rm -rf /usr/local/<appid>/data /usr/local/<appid>/logs
     rm -f /var/api/<appid>.sock
     # Remove nginx configuration
     rm -f /etc/nginx/conf.d/<appid>.conf 2>/dev/null || true
@@ -1232,9 +1264,9 @@ exit 0
 
 ### 8.15 Packaging and Verification
 
-**Deb Package Filename Naming Convention:**
-- Version numbers must not appear in any package filename. The version is exclusively managed through the Release tag and the `version` field in `config.ini`.
-- The following naming rules apply strictly based on the packaging hierarchy. Note that `<appid>` and `<platform>` are extracted from `config.ini`. `<platform>` must be either `x86_64` or `aarch64`.
+**Deb Package Filename Naming Convention (Recommended):**
+- The version is read from the `version` field in `config.ini`, not from the file name. Including a version number in the file name is optional; the recommended form omits it.
+- The platform does **not** validate the file name; it identifies the package type from the extension (`.deb` = single package, `.tar.gz` = dual-package archive) and verifies identity from `config.ini` after parsing the package. The names below are recommended so that packages are easy to distinguish by packaging hierarchy. Note that `<appid>` and `<platform>` are extracted from `config.ini`. `<platform>` is either `x86_64` or `aarch64`.
 
 | Packaging Mode | Format | Example |
 | :--- | :--- | :--- |
@@ -1266,8 +1298,19 @@ The archive root must not contain subdirectories — `.deb` files must be at the
 
 **Step 1: Build the Deb Package**
 
+`<AppRootDir>` must contain `DEBIAN/` **and** the payload under `usr/local/<appid>/`. The metadata files (`config.ini`, `<appid>.lang`, `images/icons/`) must live under `usr/local/<appid>/` — the parser reads them from `data.tar` at this path (see Section 8.2). They must **not** sit at the deb root:
+
 ```bash
+# <AppRootDir> layout before building:
+# ./<AppRootDir>/DEBIAN/control
+# ./<AppRootDir>/usr/local/<appid>/config.ini            # NOT ./<AppRootDir>/config.ini
+# ./<AppRootDir>/usr/local/<appid>/<appid>.lang
+# ./<AppRootDir>/usr/local/<appid>/images/icons/<appid>.svg
+
 dpkg-deb --build ./<AppRootDir> ./<appid>_<platform>.deb
+
+# Verify the metadata files are inside data.tar at the required path:
+dpkg-deb --contents ./<appid>_<platform>.deb | grep -E "usr/local/<appid>/(config.ini|<appid>.lang|images/icons/)"
 ```
 
 **Step 2: Verify the Package**
@@ -1357,6 +1400,25 @@ sudo systemctl status <system_id>
 │       └── tmrtimer.svg
 └── init.d/
     └── tmrtimer.service
+```
+
+**Deb Package Layout (what goes into the `.deb`):**
+
+```
+tmrtimer.deb
+├── DEBIAN/
+│   └── control
+└── usr/
+    └── local/
+        └── tmrtimer/
+            ├── config.ini
+            ├── tmrtimer.lang
+            ├── webui.bz2
+            ├── images/
+            │   └── icons/
+            │       └── tmrtimer.svg
+            └── init.d/
+                └── tmrtimer.service
 ```
 
 **config.ini:**
@@ -1583,7 +1645,7 @@ exit 0
 | Constraint | Description | Violation Consequence |
 |---|---|---|
 | **Installation Order** | The source package (`<package>.deb`) must be installed first, followed by the data package (`<appid>.deb`). The data package depends on the source package. | Installation failure |
-| **Strict Version Consistency** | The `Version` of both packages must be exactly the same. Any version mismatch triggers automatic rejection. | Automatic rejection |
+| **Version Display** | The platform does **not** require the two packages to carry the same `Version`, and does not compare them. The version shown in the App Center comes from the `version` field in `config.ini` — keep that field accurate. | — |
 | **No Binaries in Data Package** | The data package (`<appid>.deb`) **must not contain any executable binary files**, compiled code, or system-specific libraries. Only configuration files, icons, language files, nginx configurations, and other static resources are allowed. | Intercepted at the automatic validation stage before submission, without entering manual review. |
 | **Data Package Architecture** | The data package `Architecture` must be `all`, and must not be `amd64` or `arm64`. Configuration files are architecture-independent. | Automatic rejection |
 | **Source Package Independence** | The deb source package must be independently installable on the TOS 7.0 system using the `dpkg -i` command. | Installation failure |
