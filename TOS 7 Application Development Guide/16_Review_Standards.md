@@ -15,7 +15,6 @@
 | All required fields present (id/version/system_id/package/platform/type/name/icon/path, etc.) | Check against the required fields checklist item by item | 8.4.3 Key Rules |
 | type and open_path are mutually exclusive (both cannot exist) | Docker apps use the `type` field, Deb apps use the `open_path` field | 8.4.2 Field Reference |
 | path field must use `${ip}` placeholder; no hardcoded IP or domain | All URL-type path must be written as `https://${ip}:port/` | 8.4.3 Key Rules |
-| version / system_id / package version numbers are consistent | version numbers in config.ini and DEBIAN/control must match | 4.2 Version Number Specification |
 | platform field matches the actual submitted package architecture | e.g., if platform declares `x86_64`, binaries in the package must be x86_64 architecture | 8.4.2 Field Reference |
 
 #### app.lang Validation
@@ -40,7 +39,9 @@
 
 | Check Item | Description | Reference |
 |---|---|---|
+| Package identity comes from `config.ini`, not from the file name | After downloading and parsing the package, the platform compares the `id`, `platform`, and package type in `config.ini` with the application information entered on the Developer Platform. The asset file name is **not** validated; the recommended name is a developer convenience only | 4.2.4 Release Asset Naming Specification |
 | Dual-package data package (data.tar.gz) must not contain binary executable files (except lifecycle scripts such as postinst/preinst under the DEBIAN directory) | Business programs and runtime binaries must not appear in the data package | 8.17 Dual-Package Mode Specification |
+| Deb metadata files (config.ini / <appid>.lang / icon) must be under `data.tar` at `./usr/local/<appid>/`, not at the deb root | The parser reads metadata from this path; files at the deb root cause an unrecoverable metadata parse failure | 8.2 General Directory Structure |
 | Directory name case compliance (all lowercase, consistent with config.ini declarations) | Linux file system is case-sensitive | 8.2 Common Directory Structure |
 
 #### Dependency Validation
@@ -53,8 +54,7 @@
 
 | Check Item | Description | Reference |
 |---|---|---|
-| Version number must be strictly greater than the last published version (e.g., 1.0.1 > 1.0.0) | Version rollback or duplicate submission is prohibited | 4.2 Version Number Specification |
-| Version number must not contain informal suffixes such as `beta` / `alpha` / `rc` | Pre-release identifiers must be removed for official publication versions | 4.2 Version Number Specification |
+| *(No version-number checks are performed)* | The platform does **not** validate version numbers — not the format, not incrementation, not duplicates, and not consistency between `config.ini` and `DEBIAN/control`. See 4.2 for the recommendations that follow from App Center update detection | 4.2 Version Number Specification |
 
 #### Hash Validation
 
@@ -81,7 +81,7 @@
 - All required fields present: `id` / `version` / `system_id` / `package` / `platform` / `type` / `name` / `icon` / `path`, etc.
 - `type` and `open_path` mutually exclusive: Docker apps use `type` only; Deb apps use `open_path` only
 - `path` field must use `${ip}` placeholder; hardcoded IP, domain, or localhost is prohibited
-- `version` / `system_id` / `package` version numbers consistent
+- `version` / `system_id` / `package` version numbers consistent (recommended only — the platform does not validate this)
 - `platform` field matches actual submitted package architecture
 - See 8.4 config.ini Specification
 
@@ -192,17 +192,15 @@ Each position provides a clear review opinion (approve/reject with specific reas
 | 7 | Icon format does not meet requirements or path does not match | Use SVG format (transparent background + viewBox); path must exactly match config.ini `icon` | All apps | 8.6 Application Icons |
 | 8 | Deb package service cannot start/stop or has residual files after uninstall | Improve systemd service file and preinst/postinst/postrm lifecycle scripts | Deb only | 8.12 Systemd Service Specification |
 | 9 | Docker port conflict, no data persistence | Ensure ports do not conflict with system reserved ports; add volumes for data persistence | Docker only | 9.3 docker-compose.yml Specification |
-| 10 | Version number not incremented | New version number must be strictly greater than the previous version; rollback or duplicate submission prohibited | All apps | 4.2 Version Number Specification |
-| 11 | Deb package runs as root | Create a dedicated non-root user (UID ≥ 1000); specify User/Group in systemd | Deb only | 8.12 Systemd Service Specification |
-| 12 | Script execution fails with `bad interpreter` | Check file line endings; ensure all `.sh` files use LF (not CRLF); use `dos2unix` for batch conversion | All apps | 4.6 Cross-Platform Line Ending Specification |
-| 13 | Dependency not preinstalled; `command not found` | Use Go/Python implementations or bundle static dependencies; do not depend on non-preinstalled environments like Node.js/Java | Deb only | 2.4 System Preinstalled Dependencies |
-| 14 | Docker app uses privileged mode | Remove `privileged: true`; use `cap_add` for fine-grained permissions instead | Docker only | 9.4 Image & Security Requirements |
-| 15 | Checksum mismatch or missing checksum file | Regenerate SHA-256 checksum; ensure the uploaded package matches the submitted declaration | All apps | 8.15 Packaging & Checksums |
-| 16 | config.ini and DEBIAN/control version numbers are inconsistent | Ensure version numbers match between config.ini and DEBIAN/control; recommend using scripts for automatic synchronization | Deb only | 4.2 Version Number Specification |
-| 17 | Docker app uses `network_mode: host` | Remove `network_mode: host`; use bridge network + port mapping instead | Docker only | 9.4 Image & Security Requirements |
-| 18 | Submitted package architecture does not match the `platform` field | Ensure the `platform` in config.ini matches the binary architecture in the package (x86_64 / aarch64) | All apps | 8.4.2 Field Reference |
-| 19 | app.lang has empty name/descript (in some language) | name and descript for all languages must be filled; untranslated languages use English as filler | All apps | 8.5.3 Field Descriptions |
-| 20 | config.ini uses single quotes or contains inline comments | JSON only allows double-quoted strings; remove all `//` or `/* */` comments | All apps | 8.4 config.ini Specification |
+| 10 | Deb package runs as root | Create a dedicated non-root user (UID ≥ 1000); specify User/Group in systemd | Deb only | 8.12 Systemd Service Specification |
+| 11 | Script execution fails with `bad interpreter` | Check file line endings; ensure all `.sh` files use LF (not CRLF); use `dos2unix` for batch conversion | All apps | 4.6 Cross-Platform Line Ending Specification |
+| 12 | Dependency not preinstalled; `command not found` | Use Go/Python implementations or bundle static dependencies; do not depend on non-preinstalled environments like Node.js/Java | Deb only | 2.4 System Preinstalled Dependencies |
+| 13 | Docker app uses privileged mode | Remove `privileged: true`; use `cap_add` for fine-grained permissions instead | Docker only | 9.4 Image & Security Requirements |
+| 14 | Checksum mismatch or missing checksum file | Regenerate SHA-256 checksum; ensure the uploaded package matches the submitted declaration | All apps | 8.15 Packaging & Checksums |
+| 15 | Docker app uses `network_mode: host` | Remove `network_mode: host`; use bridge network + port mapping instead | Docker only | 9.4 Image & Security Requirements |
+| 16 | Submitted package architecture does not match the `platform` field | Ensure the `platform` in config.ini matches the binary architecture in the package (x86_64 / aarch64) | All apps | 8.4.2 Field Reference |
+| 17 | app.lang has empty name/descript (in some language) | name and descript for all languages must be filled; untranslated languages use English as filler | All apps | 8.5.3 Field Descriptions |
+| 18 | config.ini uses single quotes or contains inline comments | JSON only allows double-quoted strings; remove all `//` or `/* */` comments | All apps | 8.4 config.ini Specification |
 
 ### 16.6 Rejection Correction Process
 
@@ -212,7 +210,7 @@ Each position provides a clear review opinion (approve/reject with specific reas
 4. No resubmission after 30 days → Submission is automatically closed
 5. Consecutive **3 automated validation failures** or **manual review rejections** both count toward the rejection count; after 3 consecutive rejections, the platform automatically generates a **Customer Service Consultation Ticket** (not a review ticket), with a technical specialist providing one-on-one assistance for corrections
 6. **After successfully correcting and submitting a new version, the consecutive rejection count is automatically reset**: Once the developer completes corrections, submits a new version, and passes review, the historical rejection count resets to zero and is no longer accumulated
-7. Resubmit after corrections → Update the version number and re-enter the review workflow under the new version
+7. Resubmit after corrections → Re-enter the review workflow. Updating the version number is optional (the platform does not require it) but recommended, so users and reviewers can tell the corrected build apart.
 
 **Permanent Restriction Terms:**
 
