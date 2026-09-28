@@ -13,8 +13,10 @@ Choose the appropriate type based on application characteristics:
 > **Hybrid Application Type:** When a native launcher manages Docker containers, the application package can include both Deb and Docker components. In this case, use `"application_type": "deb"` and declare `["DockerEngine"]` in `depend`. The Deb component acts as the launcher/manager for the Docker service.
 
 **application_type Value Description:**
-- `"deb"` — Single-package mode (standard Deb package)
-- `"deb-TarGz"` — Dual-package/archive mode
+
+`application_type` supports only two values:
+
+- `"deb"` — Deb application (including single-package mode and dual-package/archive mode)
 - `"docker"` — Docker application
 
 ---
