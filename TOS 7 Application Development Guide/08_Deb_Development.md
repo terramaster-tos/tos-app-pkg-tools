@@ -1598,7 +1598,7 @@ exit 0
 - The `icon` path is fixed as `/images/icons/<appid>.svg` (matching the data package icon filename)
 - `id` must exactly match the `id` field in config.ini
 - `version` must exactly match the `Version` in the source package metadata
-- `application_type` must be set to `deb-TarGz`
+- `application_type` must be set to `deb`
 - `package` must match the `Package` field in the data package's DEBIAN/control
 
 **Source Package Internal File Structure:**
