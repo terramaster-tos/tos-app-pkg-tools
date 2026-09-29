@@ -23,7 +23,7 @@
 
 ### 11.2 Publisher Trust
 
-The TNAS Developer Platform establishes publisher trust through:
+The TOS Developer Platform establishes publisher trust through:
 
 1. **Developer Account Verification**: Registration requires email verification
 2. **Application Review**: All submissions undergo manual security review
