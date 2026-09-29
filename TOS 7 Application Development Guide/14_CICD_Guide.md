@@ -227,7 +227,7 @@ jobs:
 
 ```
 
-> **Gitee Actions (China-based Developers):** For developers hosting on Gitee, adapt the GitHub Actions workflows to the Gitee CI/CD format. Complete Gitee CI/CD templates are available on the TNAS Developer Platform. Gitee uses the `gitee-ci.yml` configuration format. Please refer to the Gitee documentation for environment setup.
+> **Gitee Actions (China-based Developers):** For developers hosting on Gitee, adapt the GitHub Actions workflows to the Gitee CI/CD format. Complete Gitee CI/CD templates are available on the TOS Developer Platform. Gitee uses the `gitee-ci.yml` configuration format. Please refer to the Gitee documentation for environment setup.
 
 ### 14.4 Release & Upload
 
@@ -235,7 +235,7 @@ After a successful build:
 
 1. Create a GitHub Release with the deb package and checksums
 2. Update the repository's config.ini and app.lang if needed
-3. Submit the new version through the TNAS Developer Platform
+3. Submit the new version through the TOS Developer Platform
 4. When submitting the version on the Developer Platform, select the Release (tag) and the package you just uploaded
 
 ---
