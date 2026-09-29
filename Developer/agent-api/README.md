@@ -1,6 +1,5 @@
 # TerraMaster Developer Platform · Agent API
 
-
 The TerraMaster Developer Platform Agent API lets you manage apps and versions on the platform programmatically. It is intended for AI agents, command-line tools, and CI/CD pipelines that publish and maintain apps without going through the web portal.
 
 With this API you can:
@@ -70,6 +69,14 @@ Two rules apply to every client, including AI agents:
 
 1. **Never pass the token as a command-line argument.** Read it from the environment. Command-line arguments end up in shell history, process listings, and logs.
 2. **Never print, log, or echo the token value** in output, responses, or conversation.
+
+3. **Keep the token out of process listings as well.** In a shell, `${TDP_API_TOKEN}` is expanded *before* `curl` starts, so the value lands in the process's `argv`, which is world-readable (`/proc/<pid>/cmdline` on Linux). The examples in this reference use the inline header for readability; on a shared host, generate a `0600` config file once and call `curl --config` instead:
+
+```bash
+umask 077
+python3 -c 'import os, pathlib; p = pathlib.Path.home() / ".tdp_curlrc"; p.write_text("header = \"Authorization: Bearer %s\"\n" % os.environ["TDP_API_TOKEN"]); p.chmod(0o600)'
+curl --fail-with-body --silent --show-error --config ~/.tdp_curlrc "${TDP_BASE_URL}/v1/apps"
+```
 
 When `TDP_BASE_URL` is unset, fall back to the production URL. Ask the user to configure something only when `TDP_API_TOKEN` is missing:
 
@@ -289,6 +296,8 @@ Lists the Developer's Apps.
 | --- | --- | --- | --- |
 | `kind` | string | `all` | Filter by package type. One of `all`, `deb`, `docker`. |
 
+> **Only the plain values are valid.** Pass `all`, `deb` or `docker`. The display form this endpoint returns (`.deb` / `docker image`) is **not** a valid filter value — never feed it back. No other value is defined for this parameter.
+
 ```bash
 curl --fail-with-body --silent --show-error \
   -H "Authorization: Bearer ${TDP_API_TOKEN}" \
@@ -304,8 +313,7 @@ curl --fail-with-body --silent --show-error \
     "app_id": "com.example.myapp",
     "name": "My App",
     "kind": ".deb",
-    "status": 0,
-    "created_at": 1767960000
+    "created_at": "<unix_seconds>"
   }
 ]
 ```
@@ -443,7 +451,7 @@ curl --fail-with-body --silent --show-error \
   "${TDP_BASE_URL}/v1/apps/${APP_ID}/releases?page=1&per_page=5"
 ```
 
-**Response** `200` — `{"total": N, "items": [...]}`. `items[].files[].browser_download_url` is a legal value for the `browser_download_url` field when creating a Version. Release `created_at` is Unix seconds.
+**Response** `200` — `{"total": N, "items": [...]}`. Each item carries the upstream Release metadata — `tag`, `name`, `created_at`, `prerelease`, `author` — plus `files[]`, and each file carries `name` and `browser_download_url`. `items[].files[].browser_download_url` is a legal value for the `browser_download_url` field when creating a Version. Release `created_at` is Unix seconds. Do not assume the repository platform's own naming (`tag_name`, `assets`) — this endpoint does not use it.
 
 **Prefer the repository platform's own API when you can** — GitHub: `GET https://api.github.com/repos/{owner}/{repo}/releases`, Gitee: `GET https://gitee.com/api/v5/repos/{owner}/{repo}/releases` (`{owner}/{repo}` taken from the App's `repo` URL). Call this endpoint only when the official API is unavailable (for example, no repository credentials), and note that it is **strictly rate-limited**.
 
@@ -452,7 +460,7 @@ curl --fail-with-body --silent --show-error \
 - The server caches the full list per App for **5 minutes**.
 - Only requests that trigger a full fetch consume quota: **1 per Developer per 10 seconds**. Cache hits are not rate-limited.
 - A full fetch covers at most the most recent **5000 Releases**; beyond that, `total` reflects the truncated snapshot size.
-- When quota is exhausted: a normal fetch falls back to stale cache if one exists, and returns `429` `300801` if not; a `refresh=true` fetch always returns `429` `340801`. `details.retry_after` gives the exact number of seconds to wait (≤10 for normal fetches, ≤60 for forced refreshes); `details.advice` explains the fix.
+- When quota is exhausted: a normal fetch falls back to stale cache if one exists, and returns `429` `300801` if not; a `refresh=true` fetch always returns `429`. `details.retry_after` gives the exact number of seconds to wait (≤10 for normal fetches, ≤60 for forced refreshes); `details.advice` explains the fix.
 - If the upstream repository fails: a normal fetch falls back to stale cache; a forced refresh fails outright — stale data is never used to disguise an unfinished refresh. Failure returns `502` `340901`.
 
 **Errors:** `401` `110301`, `403` `110401`, `404` `300501`, `429` `300801` / `340801`, `502`/`503` `340901`.
@@ -496,7 +504,7 @@ This response means deletion completed. Do not repeat the request.
 2. Tell the user which Versions block the deletion, and in what states they are.
 3. Explicitly ask whether to continue.
 4. **Do not** automatically withdraw a review, request a takedown, or retry the deletion.
-5. Only after the user confirms may you dispose of the relevant Versions as described in [section 6.5](#65-version-disposal), then retry the deletion.
+5. Only after the user confirms may you dispose of the relevant Versions as described in [section 6.5](#66-version-disposal), then retry the deletion.
 
 ### 6.3 Versions
 
@@ -520,7 +528,7 @@ curl --fail-with-body --silent --show-error \
     "id": "9c8b7a6f-0000-0000-0000-000000000000",
     "version": "1.0.0",
     "status": 2,
-    "created_at": 1767960000
+    "created_at": "<unix_seconds>"
   }
 ]
 ```
@@ -559,7 +567,7 @@ curl --fail-with-body --silent --show-error \
   "${TDP_BASE_URL}/v1/apps/${APP_ID}/versions/${VERSION_ID}"
 ```
 
-**Response** `200` — a Version object, including `id`, `version`, `status`, and `created_at`. Read `status` before choosing an operation — see [section 6.5](#65-version-disposal).
+**Response** `200` — a Version object, including `id`, `version`, `status`, and `created_at`. Read `status` before choosing an operation — see [section 6.5](#66-version-disposal).
 
 **Errors:** `401` `110301`, `403` `110401`, `404` `310501`.
 
@@ -611,14 +619,14 @@ Starts a Version Creation Task.
 
 **Required scope:** `version:write`.
 
-**Precondition:** the App must not already have a Version in review (`status=0`). If it does, the call fails with `400` `200201` — wait for that review to finish, or withdraw it first (see [section 6.5](#65-version-disposal)).
+**Precondition:** the App must not already have a Version in review (`status=0`). If it does, the call fails with `400` `200201` — wait for that review to finish, or withdraw it first (see [section 6.5](#66-version-disposal)).
 
 **Request body**
 
 | Field | Type | Required | Description |
 | --- | --- | :-: | --- |
 | `tag` | string | Yes | Version tag, free-form, at most 128 characters. |
-| `browser_download_url` | string | Yes | Direct download URL of the package file. Its host must match the App's repo host. |
+| `browser_download_url` | string | Yes | Direct download URL of the package file. Must be an absolute URL including a host, at most 2048 characters, and `https` — plain `http` is accepted only when the App's own repo URL is `http`. Its host must match the App's repo host. |
 
 ```bash
 TASK_JSON="$({
@@ -645,7 +653,7 @@ export TASK_ID="$(printf '%s\n' "${TASK_JSON}" | jq -er '.task_id')"
 
 No Version entity exists at this point. The `202` means the task was accepted, not that the package is valid.
 
-**Errors:** `400` `100101`, `400` `200201` (a Version of this App is already under review, or other input validation), `401` `110301`, `403` `110401`, `404` `300501`, `429` `310801`, `503` `990301`.
+**Errors:** `400` `100101`, `400` `200201` (a Version of this App is already under review, or other input validation), `401` `110301`, `403` `110401`, `404` `300501`, `409` (another creation task is already in progress for this Developer), `429` `310801`, `503` `990301`.
 
 #### `GET /v1/apps/{app_id}/versions/tasks/{task_id}`
 
@@ -675,7 +683,7 @@ curl --fail-with-body --silent --show-error \
 | `0` | waiting | Keep polling. |
 | `1` | checking | Keep polling. |
 | `2` | passed | Read the Parse Result, then confirm. |
-| `3` | failed | Stop. Inspect the failed steps' `message` and `advice`. **Never confirm a failed task.** |
+| `3` | failed | Stop. Inspect the failed steps' `message` and `advice`. **Never confirm a failed task.** If no step is marked failed, the fault is on the platform side, not in your package — see 6.5.5. |
 
 **`version_id`** appears (non-empty) only after Confirm succeeds. `all_status = 2` with an **empty** `version_id` means: the task has passed and is waiting for you to Confirm.
 
@@ -693,6 +701,8 @@ curl --fail-with-body --silent --show-error \
 | | `platform_mismatch` | config.ini Platform Consistency | Same |
 | | `invalid_language_files` | app.lang Format | Same |
 | | `icon_validation_failed` | Icon Compliance | Same |
+
+What each step actually checks, and the threshold that fails it, is documented in [section 6.5](#65-package-validation).
 
 Both levels are **fixed enums** — the keys above never change, and every response carries all of them. Each step object always contains **four** fields:
 
@@ -771,11 +781,13 @@ curl --fail-with-body --silent --show-error \
 | `app_desc` | Application description read from the package. |
 | `version_number` | Version number read from the package. |
 | `platform` | Target architecture. |
-| `file_size` | Package size. |
-| `file_hash` | Package hash. |
+| `file_size` | Size in bytes of the package the platform downloaded. |
+| `file_hash` | SHA-256 of the downloaded package bytes. |
 | `release_notes` | Release notes. |
 | `category` | Application category. |
 | `icon` | Icon. **May be a large inline data URL** — do not assume it is a short link, and avoid printing it in full to a terminal. |
+
+Where these values come from: `app_name`, `app_desc`, and `release_notes` are read from the `en-us` section of the language file (`name`, `descript`, `release_note`); `version_number` from `config.ini`'s `version`; `category` from `config.ini`'s `category`; `file_hash` and `file_size` from the downloaded bytes; and `platform` from the App's own configuration, **not** from the package's `config.ini`. `icon` is the raw byte content of `{AppID}.svg`, uploaded to object storage at confirmation. `version_number` and the asset details you submitted (`tag`, `browser_download_url`) are written into the Version record only at confirmation.
 
 **Verify these fields before confirming.** This is the last point at which nothing has been created yet: catching a wrong architecture or version number here costs a retry, whereas catching it later costs a withdrawal and a new submission.
 
@@ -830,7 +842,151 @@ The task is removed immediately; subsequent requests for that `task_id` return `
 
 **Errors:** `401` `110301`, `403` `110401`, `404` `310502`, `409` `310601`.
 
-### 6.5 Version Disposal
+### 6.5 Package validation
+
+You never upload a package: you give the platform a direct asset URL, and it downloads the bytes itself. Every Version Creation Task then runs a fixed set of **ten checks** against that package. This section documents what is checked, the exact thresholds, and which Step Key fails when a check does not pass — so that a failed task tells you what to fix instead of leaving you to guess.
+
+Failing any check ends the task, and **no Version record is written**. There is no warning level.
+
+#### 6.5.1 Request-level checks
+
+These run before a Task exists, so a failure here returns an error response instead of a `task_id`.
+
+| Check | Rule | On failure |
+| --- | --- | --- |
+| App ownership | The App must exist and belong to the Token's Developer. | `404` `300501` |
+| Request body | Must be valid JSON. | `400` `100101` |
+| `tag` | Required, at most 128 characters. | `400` `200201` |
+| Review lock | The App must have no Version under review. | `400` `200201` |
+| `browser_download_url` | Required; at most 2048 characters; an absolute URL including a host; `https` (plain `http` is accepted only when the App's own repo URL is `http`); the host must equal the App's repo host. | `400` `200201` |
+| Single-flight | One in-progress creation task per Developer. | `409` |
+| Capacity | The platform-wide in-progress task count is at its limit. | `429` `310801` |
+| Draining | The service is shutting down and accepts no new tasks. | `503` `990301` |
+
+Single-flight `409` has no `code` listed in [section 7.2](#72-error-codes); branch on the status code for this one.
+
+**The package's file name, extension, and `Content-Type` are never checked.** The package form is decided by file header alone (see 6.5.2).
+
+#### 6.5.2 Download stage (`download_step`)
+
+The three download steps run **in order**. The first failure ends the task: steps before it report `passed`, and the failing step plus everything after it — including all seven parse steps — report `waiting`.
+
+**Download.** The platform fetches `browser_download_url` over HTTP GET. A final response other than `200`, or a body larger than 2 GiB, fails `package_download_failed`.
+
+**Format detection** applies to deb-kind apps only and reads the file header:
+
+| File header | Detected form |
+| --- | --- |
+| AR (`!<arch>`) | single-package `.deb` |
+| gzip | double-package outer archive `.tar.gz` |
+| anything else | fails `invalid_package_format` |
+
+docker-kind apps get no detection step: their archive is always unpacked as gzip.
+
+**Structure and unpacking** depends on the form.
+
+**(a) deb-kind app, single `.deb`** — these paths must exist inside the package, case-sensitively:
+
+| Required file | Path inside the package |
+| --- | --- |
+| `config.ini` | `usr/local/{AppID}/config.ini` |
+| language file | `usr/local/{AppID}/{AppID}.lang` |
+| icon | `usr/local/{AppID}/images/icons/{AppID}.svg` |
+
+A file that is not found at its path is reported as *missing* (`missing_required_files`), not as a content problem. A package that is corrupt, truncated, or compressed with an unsupported method fails `package_unzip_failed`.
+
+**(b) deb-kind app, double-package `.tar.gz`** — the outer archive must embed a `.deb`. The platform prefers the member named `{AppID}.deb`; failing that, it takes the first `.deb` member containing a `usr/local/{AppID}/` directory. No usable embedded package fails `invalid_package_format`. More than 8 embedded `.deb` members — or any member declaring more than 2 GiB, including members the platform never reads — fails `package_unzip_failed`.
+
+**(c) docker-kind app, `.tar.gz`** — no directory structure is required; the three files are located by file name anywhere in the archive. A corrupt archive, including a broken gzip stream, fails `package_unzip_failed`; so does any member declaring more than 2 GiB.
+
+#### 6.5.3 Size limits
+
+| Object | Limit | Failing step |
+| --- | --- | --- |
+| Whole package (the bytes downloaded) | 2 GiB | `package_download_failed` |
+| Any single member declared inside a `.tar.gz`, including members that are never read | 2 GiB | `package_unzip_failed` |
+| Each archive entry the platform reads (`config.ini`, `{AppID}.lang`, `{AppID}.svg`) | 1 MiB each | `package_unzip_failed` |
+| Embedded `.deb` members inside the outer archive | 8 | `package_unzip_failed` |
+| Icon file content | 50 KB | `icon_validation_failed` |
+
+The icon has **two** ceilings that mean different things: over 1 MiB is an oversized archive entry and fails unpacking; over 50 KB but not over 1 MiB is a non-compliant icon and fails `icon_validation_failed`.
+
+These are **hard rejection limits, not warnings**: exceeding one fails the task and no Version record is created. The 2 GiB and 8-member ceilings exist so that one oversized or pathological archive cannot exhaust platform processing capacity — so a package that trips them is rejected regardless of how valid its contents are.
+
+#### 6.5.4 Parse stage (`parse_step`)
+
+The seven parse checks run **independently**; every status response carries all seven results, with the ones not yet reached reported as `waiting`. A failure in one does not suppress the others — a missing `config.ini` still lets the platform report on the language file and the icon.
+
+**`missing_required_files`** — all three required files are present (located as described in 6.5.2). On failure every missing file is reported at once, and the content checks for those files stay `waiting`.
+
+**`invalid_config_ini`** — the file is named `config.ini` but is parsed as **JSON**. It must be a valid JSON object, and the following ten fields must exist and be non-empty (`null` and `""` count as empty; `false`, `0`, `[]`, and `{}` are valid values), with types matching their convention (a boolean field may not be written as a string):
+
+| Required field | Meaning |
+| --- | --- |
+| `id` | App ID |
+| `icon` | App icon |
+| `publisher` | Publisher |
+| `exec` | Whether to start |
+| `version` | Application version — the source of the Version Number |
+| `low_version` | Minimum supported system version |
+| `category` | App category, an array of strings |
+| `platform` | Architecture |
+| `application_type` | App kind |
+| `user` | Must be non-empty |
+
+When this step fails, `id`, `platform`, and `application_type` are **not** evaluated (they stay `waiting`), because they depend on `config.ini` being parseable.
+
+**`app_id_mismatch`** — `config.ini`'s `id` must equal the App ID **exactly**, case-sensitively. On failure both values are reported.
+
+**`invalid_application_type`** — deb-kind apps accept `deb` or `deb-TarGz`; docker-kind apps accept `docker`. Both deb values are accepted regardless of which form was actually submitted.
+
+**`platform_mismatch`** — must equal the App's architecture (`x86_64` or `aarch64`). On failure both values are reported.
+
+**`invalid_language_files`** — `{AppID}.lang` is INI format and must contain all **14** language sections: `zh-cn`, `zh-hk`, `en-us`, `fr-fr`, `de-de`, `it-it`, `es-es`, `hu-hu`, `ja-jp`, `ko-kr`, `pl-pl`, `ru-ru`, `tr-tr`, `pt-pt`. In each section, `name`, `auth`, and `descript` must be non-empty; `release_note` is optional. Sections outside these 14 are neither checked nor rejected.
+
+**`icon_validation_failed`** — `{AppID}.svg` must:
+
+1. be parseable XML;
+2. be at most 50 KB;
+3. contain at most 50 start tags;
+4. contain none of `script`, `foreignObject`, `iframe`, `object`, `embed`, matched by tag name with any namespace prefix ignored;
+5. contain no attribute beginning with `on`, case-insensitively, including inside the `xlink` namespace;
+6. reference no `href` / `xlink:href` beginning with `javascript:`, `vbscript:`, `file:`, `ftp:`, `about:`, or `blob:` — empty values, `#` fragments, and `http`, `https`, `data`, or relative paths are all accepted;
+7. contain no DOCTYPE, ENTITY, or other XML directives; the only processing instruction allowed is `<?xml ...?>`, and its target name is case-insensitive.
+
+Comments and text nodes are unrestricted. Icon *semantics* are not checked: the root element need not be `<svg>`, and `viewBox`, dimensions, and colours are ignored.
+
+#### 6.5.5 A failed task with no failed step
+
+`all_status = 3` while **no step is marked failed** means the platform itself failed, not your package — a Task Fault. There is no failing step and no `advice`. Stop and report it; do not try to "fix" the package, and note that the same input may succeed on retry.
+
+A genuine package failure always points at exactly one Step Key.
+
+#### 6.5.6 What the platform does not validate
+
+Do not rely on the platform as a gatekeeper for any of the following:
+
+- **`tag` versus the package's own version** — `tag` is a free-form label with no format, ordering, or uniqueness requirement, and is never compared with `config.ini`'s `version`.
+- **Version-number format and uniqueness** — the Version Number only has to be non-empty. There is no semantic-version requirement, and duplicate version numbers may be submitted.
+- **Package file name, extension, and `Content-Type`** — form is decided by file header alone.
+- **Package signature, build toolchain, `.deb` control information, and executable content** — only the files listed in 6.5.2 are read. Every other member is ignored, though it still counts against the size ceilings.
+- **`config.ini` field values other than `id`, `application_type`, and `platform`** — the remaining required fields only have to be non-empty, and their contents are never compared. In particular, `config.ini`'s `icon` field is never compared with the actual icon file.
+- **`application_type` versus the submitted package form** — only the allowed value set is checked, not whether the value matches single-package or double-package form.
+- **Icon semantics** — see 6.5.4.
+- **Multi-architecture or multi-package submission** — one task validates exactly one package file; packages for different architectures are neither merged nor cross-checked.
+- **Language file content quality** — only completeness and non-emptiness are checked, and only the `en-us` section is captured into the Version.
+- **Content de-duplication** — the same package may be submitted repeatedly, as long as the App has no Version under review.
+
+#### 6.5.7 Edge cases worth knowing
+
+- **A download-stage failure leaves all seven parse steps `waiting`** — the package never opened, so there is nothing to say about its contents.
+- **A corrupt `.tar.gz` is classified as a download failure, not an unpack failure.** Format detection reads only the file header, so a damaged archive fails `package_download_failed`.
+- **"Missing" and "non-compliant" are different failures.** A file that is not found fails `missing_required_files`; a file that is present but wrong fails its own content step (`invalid_config_ini`, `invalid_language_files`, or `icon_validation_failed`).
+- **A non-compliant `config.ini` suppresses three checks** — see 6.5.4.
+- **Task endpoints require ownership.** Status, result, cancel, and confirm all require the task to belong to the Token's Developer and to the App in the path; otherwise it is treated as not found (`404` `310502`).
+- **Cancellation has a boundary.** You may cancel while the download or validation is running; a task whose confirmation has already begun cannot be cancelled, because the platform does not interrupt a write that has started.
+
+### 6.6 Version Disposal
 
 There is **no endpoint that unconditionally deletes a Version immediately.** Deleting a version would remove a package that users may already have installed. Disposal is therefore state-dependent: read the Version's `status` first, then choose the valid operation.
 
@@ -1020,7 +1176,7 @@ Follow this sequence:
 5. `404` — reload entity IDs from the App or Version list; the ID may be stale or may belong to another resource. For task code `310502`, the task may have been cancelled or expired and must be recreated.
 6. `409` — use `code` to distinguish an ordinary business-validation failure from a Task or Review state conflict. Reload resource state before deciding. **Never retry indefinitely.**
 7. `429` / `300801` / `340801` — wait for the number of seconds given by `details.retry_after`, then retry the Release-list or upstream-repo request. Never flood the service with concurrent requests.
-8. `502` / `340901` — the upstream Repo failed while querying the Release list. Preserve the error and retry a bounded number of times. Package download or parsing failures do **not** return HTTP errors — they show up as failed task steps (see [section 6.4](#64-version-creation)).
+8. `502` / `340901` — the upstream Repo failed while querying the Release list. Preserve the error and retry a bounded number of times. Package download or parsing failures do **not** return HTTP errors — they show up as failed task steps (see [section 6.5](#65-package-validation)).
 9. `503` / `990301` — the service is shutting down. Retry task creation later with the same input.
 10. `500` / `991001` — stop automation and report the failure. The response will not expose database, network, credential, or other internal errors.
 
@@ -1133,7 +1289,7 @@ These are stated explicitly so that nothing is a surprise. Each is a deliberate 
 - **Timestamps come in two flavors.** Unix seconds on business objects, RFC 3339 strings on token metadata. This is deliberate; see [Time fields](#time-fields).
 - **`kind` has two notations.** `.deb` / `docker image` (display form) in the App-list response; `deb` / `docker` everywhere else. See [section 6.2](#62-apps).
 - **UUIDs in paths, business IDs in bodies.** `{app_id}` in a path is always the entity UUID; the human-readable business identifier travels as the `app_id` body field. The two are never interchangeable.
-- **`DELETE` on a version is not a delete.** It creates a takedown request. See [section 6.5](#65-version-disposal).
+- **`DELETE` on a version is not a delete.** It creates a takedown request. See [section 6.5](#66-version-disposal).
 - **There is no idempotency key.** Confirmation is idempotent by `task_id`, and re-submitting the current repo URL is idempotent; for everything else, avoid blind retries and re-read state first.
 
 ---
