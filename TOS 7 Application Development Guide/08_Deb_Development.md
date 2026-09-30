@@ -57,7 +57,7 @@ All Deb application files are installed under the `/usr/local/<app_id>/` directo
 ├── <app_id>.lang                 # 【Required】Multilingual configuration file
 ├── images/
 │   └── icons/
-│       └── <icon_file>.svg       # 【Required】Application icon
+│       └── <app_id>.svg       # 【Required】Application icon
 ├── init.d/
 │   └── <system_id>.service       # 【Required】Systemd service unit file
 ├── webui.bz2                     # 【Required for WebUI applications】Frontend page archive
@@ -108,7 +108,7 @@ Therefore the deb payload itself must be laid out as follows — the metadata fi
 config.ini.id              == <app_id>
 config.ini.package         == Package in DEBIAN/control
 config.ini.system_id       == systemd service unit ID (without .service suffix)
-config.ini.icon            == "/images/icons/<icon_file>.svg"
+config.ini.icon            == "/images/icons/<app_id>.svg"
 config.ini.path            == "/<app_id>/" (WebUI Internal Open)
 ```
 
@@ -149,7 +149,7 @@ For applications where the backend is a local executable service, the frontend i
 ├── webui.bz2                     # 【Required】Frontend page archive
 ├── images/
 │   └── icons/
-│       └── <icon_file>.svg
+│       └── <app_id>.svg
 ├── init.d/
 │   └── <system_id>.service
 ├── <app_id>.env                  # 【Optional】Environment variable configuration file
@@ -166,11 +166,14 @@ For applications where the backend is a local executable service, the frontend i
 ```json
 {
   "id": "<app_id>",
-  "icon": "/images/icons/<icon_file>.svg",
+  "icon": "/images/icons/<app_id>.svg",
+  "publisher": "publisher name",
   "exec": true,
   "version": "<app_version>",
+  "low_version": "<low_version>",
   "category": ["Utilities"],
   "platform": "x86_64",
+  "user": "<app_user>",
   "system_id": "<system_id>",
   "package": "<deb_package_name>",
   "application_type": "deb",
@@ -189,7 +192,7 @@ For applications where the backend is a local executable service, the frontend i
 6. The backend service provides HTTP interfaces externally via Unix Socket and must listen on `/var/api/<app_id>.sock` on startup.
 7. `/var/api` must be auto-created if it does not exist; old socket files must be cleaned up before startup.
 8. Socket file permissions must allow platform proxy access.
-9. Frontend requests to backend interfaces must go through the platform proxy path, with the fixed format `/v2/proxy/<app_id>`.
+9. Frontend requests to backend interfaces must go through the platform proxy path, with the fixed format `/v2/proxy/<app_id>/<api_name>`.
 10. Frontend requests must carry the platform authentication headers, including `X-Csrf-Token` and `Cookie` in the request headers.
 
 **Socket File Specification:**
@@ -199,8 +202,8 @@ For applications where the backend is a local executable service, the frontend i
 - Supports at least 100 concurrent connections
 - Idle connection timeout: 30 seconds
 
-7. Frontend requests to backend interfaces must go through the platform proxy path: `/v2/proxy/<app_id>/<api_name>`.
-8. Frontend requests must carry the platform authentication headers.
+11. Frontend requests to backend interfaces must go through the platform proxy path: `/v2/proxy/<app_id>/<api_name>`.
+12. Frontend requests must carry the platform authentication headers.
 
 **CORS and Preflight Request Configuration:**
 The backend must handle CORS preflight requests (OPTIONS method) for the platform proxy. Allow the following:
@@ -224,7 +227,7 @@ For applications where the backend is a local executable service, the frontend i
 ├── webui.bz2                     # 【Required】Frontend page archive
 ├── images/
 │   └── icons/
-│       └── <icon_file>.svg
+│       └── <app_id>.svg
 ├── nginx/
 │   └── <app_id>.conf             # 【Required】Nginx configuration file
 ├── init.d/
@@ -243,11 +246,14 @@ For applications where the backend is a local executable service, the frontend i
 ```json
 {
   "id": "<app_id>",
-  "icon": "/images/icons/<icon_file>.svg",
+  "icon": "/images/icons/<app_id>.svg",
+  "publisher": "publisher name",
   "exec": true,
   "version": "<app_version>",
+  "low_version": "<low_version>",
   "category": ["Utilities"],
   "platform": "x86_64",
+  "user": "<app_user>",
   "system_id": "<system_id>",
   "package": "<deb_package_name>",
   "application_type": "deb",
@@ -267,7 +273,7 @@ For applications where the backend is a local executable service, the frontend i
 
 **Port Listening Rules:**
 - **Must** listen on `0.0.0.0` (all network interfaces); listening only on `127.0.0.1` is forbidden. Listening only on the loopback address prevents external access.
-- **Must not** occupy system reserved ports (22, 80, 443, 8181, 5050)
+- **Must not** occupy system reserved ports (22, 80, 443, 445, 3306, 5050, 5432, 6379, 8181, 8443) — full list: Appendix B of Chapter 20 / §12.8
 - Recommended port range: 8000-19999
 
 **Nginx Configuration File Template:**
@@ -306,7 +312,7 @@ For background service applications without an interface.
 ├── <app_id>.lang
 ├── images/
 │   └── icons/
-│       └── <icon_file>.svg
+│       └── <app_id>.svg
 ├── init.d/
 │   └── <system_id>.service
 ├── <app_id>.env                  # 【Optional】Environment variable configuration file
@@ -323,11 +329,14 @@ For background service applications without an interface.
 ```json
 {
   "id": "<app_id>",
-  "icon": "/images/icons/<icon_file>.svg",
+  "icon": "/images/icons/<app_id>.svg",
+  "publisher": "publisher name",
   "exec": true,
   "version": "<app_version>",
+  "low_version": "<low_version>",
   "category": ["Utilities"],
   "platform": "x86_64",
+  "user": "<app_user>",
   "system_id": "<system_id>",
   "package": "<deb_package_name>",
   "application_type": "deb"
@@ -365,7 +374,7 @@ Below is the config.ini standard template, divided into three independent exampl
 >
 > | Application Type | Required Fields | Forbidden Fields |
 > |---|---|---|
-> | WebUI Internal Open (iframe) | `type: "iframe"` + `path: "/<id>/"` | `open_path` |
+> | WebUI Internal Open (iframe) | `type: "iframe"` + `path: "/<app_id>/"` | `open_path` |
 > | WebUI External Open (New Tab) | `open_path: true` + `path: "http://${ip}:<port>"` | `type` |
 > | No UI Service | — | `type`, `open_path`, `path` |
 
@@ -377,7 +386,7 @@ Below is the config.ini standard template, divided into three independent exampl
 {
   "id": "dev-myapp",
   "icon": "/images/icons/dev-myapp.svg",
-  "publisher": "Developer Name",
+  "publisher": "publisher name",
   "exec": true,
   "type": "iframe",
   "path": "/dev-myapp/",
@@ -410,7 +419,7 @@ Below is the config.ini standard template, divided into three independent exampl
 {
   "id": "dev-myapp",
   "icon": "/images/icons/dev-myapp.svg",
-  "publisher": "Developer Name",
+  "publisher": "publisher name",
   "exec": true,
   "open_path": true,
   "path": "http://${ip}:8686",
@@ -439,7 +448,7 @@ Below is the config.ini standard template, divided into three independent exampl
 {
   "id": "dev-myapp",
   "icon": "/images/icons/dev-myapp.svg",
-  "publisher": "Developer Name",
+  "publisher": "publisher name",
   "exec": true,
   "help": "https://example.com/docs",
   "version": "1.0.0",
@@ -470,7 +479,7 @@ Below is the config.ini standard template, divided into three independent exampl
 | `path` | string | Conditionally Required | Application access address | **The `path` field is mutually exclusive by scenario: iframe uses `/<app_id>/`; external open uses `http://${ip}:<port>`; no UI is left empty.** Must use the `${ip}` placeholder (e.g., `http://${ip}:8686`). The system automatically replaces `${ip}` with the TNAS LAN IP. **Hardcoding a fixed IP or domain is prohibited.** Non-80/443 ports: `http://${ip}:<port>`. WebUI Internal Open (iframe): `/<app_id>/`. No UI application: set to `""` or omit this field. Required when `exec=true`. |
 | `exec` | bool | ✅ Yes | Whether there is an executable service | Whether the application supports start/stop operations. `true`: App Center displays start/stop buttons; `false`: display only, no lifecycle control. |
 | `open_path` | bool | Conditionally Required | Whether to open in a new tab | Controls how the application is opened: `true` = new browser tab; `false` or omitted = TOS desktop embedded iframe. External open applications must set this to `true`. **Mutually exclusive with `type`; must not be set simultaneously.** |
-| `type` | string | Conditionally Required | Application open type | Set to `"iframe"` for WebUI Internal Open (iframe embedding). **⚠️ Only effective when `open_path` is not set or set to false.** External open or no UI applications do not set this field. |
+| `type` | string | Conditionally Required | Application open type | Set to `"iframe"` for Deb WebUI Internal Open (iframe embedding). **⚠️ Mutually exclusive with `open_path`; the two must not be set simultaneously.** Deb external-open and Docker applications use `open_path` instead. No UI applications do not set this field. |
 | `resize` | bool | No | Whether the window is resizable | Only effective when `open_path=false`. Controls whether the application popup can be resized. Default `false`. |
 | `maxmin` | bool | No | Whether the window can be maximized/minimized | Only effective when `open_path=false`. Controls whether the application popup supports maximize/minimize. Default `false`. |
 | `width` | int | No | Default window width | Only effective when `open_path=false`. The width of the application page when opened, default 1180. |
@@ -541,11 +550,11 @@ Correct:
 | Application Type | Opening Method | `path` Value | Example |
 |---|---|---|---|
 | Deb WebUI Internal Open | iframe embedding | `/<app_id>/` | `"/tmrtimer/"` |
-| Deb WebUI External Open | New tab | `/<app_id>/` | `"/weather/"` |
+| Deb WebUI External Open | New tab | `http://${ip}:<port>` | `"http://${ip}:16688"` |
 | Docker Application | New tab | `http://${ip}:<port>` | `"http://${ip}:8080"` |
 | No UI Service | No frontend | Omit or `""` | — |
 
-> **Note:** The `path` format for iframe mode (internal open) and external open is the same (both `/<app_id>/`). The difference lies in the `open_path` field: internal open `open_path=false` (default), external open `open_path=true`. Docker applications use the `http://${ip}:<port>` format for `path`.
+> **Note:** Deb WebUI internal open (iframe) uses the site-relative path `/<app_id>/`. Deb WebUI external open and Docker applications use the full URL format `http://${ip}:<port>`, resolved through the nginx route (see 8.4.3 and 8.13.2). The difference between internal and external open lies in the `open_path` field: internal open `open_path=false` (default), external open `open_path=true`.
 
 > **Reserved Fields:** The following field names are reserved for future platform use. Do not use them in custom config.ini: `host_network`, `container_runtime`, `sandbox`, `auto_update`, `upstream_url`, `license`, `min_memory`, `min_cpu`, `min_disk`. Using reserved fields may lead to future compatibility issues and rejection.
 
@@ -644,7 +653,7 @@ important = "用户需要注意的重要事项。"
 | Requirement | Specification |
 |---|---|
 | Format | SVG (vector graphics, transparent background) |
-| Filename | Must exactly match the `id` in config.ini (e.g., `Example-latest.svg`) |
+| Filename | Must exactly match the `id` in config.ini (e.g., `example-latest.svg`) |
 | Storage Path | Under the repository `/images/icons/` directory |
 | ViewBox | Recommended: `0 0 512 512` |
 | Design Requirements | Clearly recognizable, no prohibited content |
@@ -983,8 +992,6 @@ Retained within the application installation directory:
 /usr/local/<app_id>/init.d/<system_id>.service
 ```
 
-**Standard Service File:**
-
 **Standard Service File (with security hardening):**
 
 ```ini
@@ -1059,7 +1066,7 @@ Description: Brief description
 | Field | Required | Description |
 |---|---|---|
 | `Package` | ✅ Yes | Package name. Must match the `package` field in config.ini. |
-| `Version` | ✅ Yes | Package version. Must match the `version` field in config.ini. |
+| `Version` | ✅ Yes | Package version. Recommended to match the `version` field in config.ini (the platform does not validate this, but inconsistency may cause App Center display mismatches). |
 | `Architecture` | ✅ Yes | x86_64: `amd64`, aarch64: `arm64`. |
 | `Section` | Yes | Package classification (e.g., `utils`, `web`, `net`). |
 | `Priority` | Yes | Usually `optional`. |
@@ -1118,7 +1125,7 @@ Description: Application data package - <App Name>
 | Field | Data Package | Source Package | Association Requirement |
 |---|---|---|---|
 | `Package` | `<appid>` | `<package>` | Data package name recommended to match config.ini.id |
-| `Version` | `<version>` | `<version>` | Must be exactly the same |
+| `Version` | `<version>` | `<version>` | Recommended to keep identical (the platform does not validate the two packages' versions) |
 | `Architecture` | `all` | `amd64`/`arm64` | Data package is usually `all`; source package is the actual architecture |
 
 **config.ini Field Associations:**
@@ -1126,7 +1133,7 @@ Description: Application data package - <App Name>
 | Field | Association Description |
 |---|---|
 | `config.ini.package` | Must match the **data package** metadata `package` |
-| `config.ini.version` | Must match the **data package** metadata `version` |
+| `config.ini.version` | Recommended to match the **data package** metadata `version` (the platform does not validate this) |
 | `config.ini.system_id` | Must match the **source package** systemd service id |
 | `config.ini.path` (when external open) | Must correspond to the nginx configuration file route, resolving to the `<listen_port>` provided by the source package |
 
@@ -1253,8 +1260,10 @@ if [ "$1" = "purge" ]; then
     rm -f /var/api/<appid>.sock
     # Remove nginx configuration
     rm -f /etc/nginx/conf.d/<appid>.conf 2>/dev/null || true
-    # Remove systemd service file
-    rm -f /etc/systemd/system/<system_id>.service 2>/dev/null || true
+    # Remove the service unit from the platform-registered location.
+    # Note: /etc/systemd/system/<system_id>.service is NOT guaranteed to exist —
+    # do not hardcode it; the platform registers the unit from the application directory.
+    systemctl disable <system_id>.service 2>/dev/null || true
     # Reload systemd
     systemctl daemon-reload 2>/dev/null || true
 fi
@@ -1393,6 +1402,8 @@ sudo systemctl status <system_id>
 ```
 /usr/local/tmrtimer/
 ├── config.ini
+├── bin/
+│   └── tmrtimer
 ├── tmrtimer.lang
 ├── webui.bz2
 ├── images/
@@ -1412,6 +1423,8 @@ tmrtimer.deb
     └── local/
         └── tmrtimer/
             ├── config.ini
+            ├── bin/
+            │   └── tmrtimer
             ├── tmrtimer.lang
             ├── webui.bz2
             ├── images/
@@ -1427,10 +1440,13 @@ tmrtimer.deb
 {
   "id": "tmrtimer",
   "icon": "/images/icons/tmrtimer.svg",
+  "publisher": "publisher name",
   "exec": true,
   "version": "1.0.0",
+  "low_version": "TOS7.0",
   "category": ["Utilities"],
   "platform": "x86_64",
+  "user": "tmrtimer",
   "system_id": "tmrtimer",
   "package": "tmrtimer",
   "application_type": "deb",
@@ -1489,14 +1505,17 @@ Description: Timer application
 {
   "id": "weather",
   "icon": "/images/icons/weather.svg",
+  "publisher": "publisher name",
   "exec": true,
-  "version": "1.0.001",
+  "version": "1.0.1",
+  "low_version": "TOS7.0",
   "category": ["Utilities"],
   "platform": "x86_64",
+  "user": "weather",
   "system_id": "weather-system",
   "package": "weather-package",
   "application_type": "deb",
-  "path": "/weather/",
+  "path": "http://${ip}:16688",
   "open_path": true
 }
 ```
@@ -1544,10 +1563,13 @@ location /weather/ {
 {
   "id": "datasync",
   "icon": "/images/icons/datasync.svg",
+  "publisher": "publisher name",
   "exec": true,
   "version": "1.0.0",
+  "low_version": "TOS7.0",
   "category": ["Utilities"],
   "platform": "x86_64",
+  "user": "datasync",
   "system_id": "datasync",
   "package": "datasync",
   "application_type": "deb"
@@ -1597,7 +1619,7 @@ exit 0
 **Data Package config.ini Notes:**
 - The `icon` path is fixed as `/images/icons/<appid>.svg` (matching the data package icon filename)
 - `id` must exactly match the `id` field in config.ini
-- `version` must exactly match the `Version` in the source package metadata
+- `version` is recommended to match the `Version` in the source package metadata (the platform does not enforce or compare the two packages' versions)
 - `application_type` must be set to `deb`
 - `package` must match the `Package` field in the data package's DEBIAN/control
 
