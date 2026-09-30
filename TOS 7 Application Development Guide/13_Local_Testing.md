@@ -25,31 +25,31 @@ Before submitting your application, you must thoroughly test the complete lifecy
 
 ```bash
 # 1. Install the deb package
-sudo dpkg -i <appid>_<version>_amd64.deb
+sudo dpkg -i <appid>_x86_64.deb
 
 # 2. Check if the service is running
-sudo systemctl status <appid>
+sudo systemctl status <system_id>
 
 # 3. View service logs (real-time)
-sudo journalctl -u <appid> -f
+sudo journalctl -u <system_id> -f
 
 # 4. View recent logs
-sudo journalctl -u <appid> --since "1 hour ago"
+sudo journalctl -u <system_id> --since "1 hour ago"
 
 # 5. Check if the Web UI is accessible (Web apps)
 curl http://localhost:<port>
 
 # 6. Test start/stop
-sudo systemctl stop <appid>
-sudo systemctl start <appid>
-sudo systemctl restart <appid>
+sudo systemctl stop <system_id>
+sudo systemctl start <system_id>
+sudo systemctl restart <system_id>
 
 # 7. Test uninstallation
 sudo dpkg --remove <appid>       # Keep configuration
 sudo dpkg --purge <appid>        # Complete removal
 
 # 8. Verify cleanup (no residual files/services)
-systemctl list-unit-files | grep <appid>
+systemctl list-unit-files | grep <system_id>
 # Check application directory (the path the app itself uses)
 ls -la /usr/local/<appid> 2>/dev/null
 # Check persistent data (shared folder)
@@ -58,9 +58,11 @@ ls /Volume*/<appid> 2>/dev/null
 id <appid> 2>/dev/null
 
 # 9. Test upgrade path
-sudo dpkg -i <appid>_0.9.0_amd64.deb   # Install old version
+# Note: release asset naming is recommended as <app_id>_<platform>.deb (see 4.2.4); the platform does not
+#       validate file names. The version suffix below is only for distinguishing versions during local testing.
+sudo dpkg -i <appid>_0.9.0_x86_64.deb   # Install old version
 # ... Add some data to /Volume*/<appid>/ ...
-sudo dpkg -i <appid>_1.0.0_amd64.deb   # Upgrade to new version
+sudo dpkg -i <appid>_1.0.0_x86_64.deb   # Upgrade to new version
 # Verify data is preserved and migrated
 ```
 
@@ -97,7 +99,7 @@ docker-compose -f docker-compose.yml up -d
 # 8. Test data persistence
 docker-compose -f docker-compose.yml down
 docker-compose -f docker-compose.yml up -d
-# Verify data still exists in /Volume*/DockerAppData/<appid>/ and /Volume*/<appid>/
+# Verify data still exists in /Volume*/DockerAppData/<appid>/ (Docker applications do not use TNAS shared folders)
 
 # 9. Test health check
 docker inspect --format='{{.State.Health.Status}}' <appid>
@@ -113,12 +115,15 @@ Save as `debug.sh` and run to validate your application:
 ```bash
 #!/bin/bash
 if [ -z "$1" ]; then
-    echo "Usage: $0 <appid>"
+    echo "Usage: $0 <appid> [application_type: deb|docker]"
     exit 1
 fi
 
 APPID="$1"
-echo "=== TOS7 App Debug: $APPID ==="
+APP_TYPE="${2:-deb}"
+# Note: the systemd unit name is <system_id>, not <appid>. If system_id differs from appid,
+# replace "$APPID" with the actual system_id in the systemctl/journalctl commands below.
+echo "=== TOS7 App Debug: $APPID (type: $APP_TYPE) ==="
 
 echo "--- Service Status ---"
 systemctl status "$APPID" 2>/dev/null || echo "Service not found"
@@ -132,14 +137,23 @@ ss -tlnp | grep "$APPID"
 echo "--- Application Directory ---"
 ls -laR /usr/local/$APPID/ 2>/dev/null
 
-echo "--- Persistent Data (Shared Folder) ---"
-ls -laR /Volume*/$APPID/ 2>/dev/null
+if [ "$APP_TYPE" = "docker" ]; then
+    # Docker applications do not use TNAS shared folders: persistent data lives in /Volume*/DockerAppData/<appid>/
+    echo "--- Persistent Data (Docker App Data Root) ---"
+    ls -laR /Volume*/DockerAppData/$APPID/ 2>/dev/null
+    DATA_DIR="/Volume*/DockerAppData/$APPID/"
+else
+    # Deb applications: persistent data lives in the TNAS shared folder /Volume*/<appid>/
+    echo "--- Persistent Data (Shared Folder) ---"
+    ls -laR /Volume*/$APPID/ 2>/dev/null
+    DATA_DIR="/Volume*/$APPID/"
+fi
 
 echo "--- Recent Errors ---"
 journalctl -u "$APPID" -p err --since "10 minutes ago" --no-pager
 
 echo "--- Disk Usage ---"
-du -sh /usr/local/$APPID/ /Volume*/$APPID/ 2>/dev/null
+du -sh /usr/local/$APPID/ $DATA_DIR 2>/dev/null
 
 echo "=== Debug Complete ==="
 ```
@@ -147,11 +161,11 @@ echo "=== Debug Complete ==="
 **Service Debugging**
 
 ```bash
-# Verify service file validity
-systemd-analyze verify /etc/systemd/system/<appid>.service
+# Verify service file validity (path is resolved from the platform-registered unit; do not hardcode /etc/systemd/system/<system_id>.service)
+systemctl cat "$APPID" >/dev/null 2>&1 || echo "Unit not found (platform may register it from the application directory)"
 
 # Check service dependencies
-systemd-analyze dump | grep -A5 <appid>
+systemd-analyze dump | grep -A5 <system_id>
 
 # Check port listening
 ss -tlnp | grep <port>
@@ -166,7 +180,7 @@ ls -laR /usr/local/<appid>/
 ls -laR /Volume*/<appid>/
 
 # View systemd error logs
-journalctl -u <appid> -p err
+journalctl -u <system_id> -p err
 
 # View system logs
 grep <appid> /var/log/syslog
@@ -201,13 +215,13 @@ Rapid iteration during development:
 
 ```bash
 # Deb application: quick reinstall
-sudo dpkg --purge <appid> && sudo dpkg -i <appid>_<version>_amd64.deb
+sudo dpkg --purge <appid> && sudo dpkg -i <appid>_x86_64.deb
 
 # Docker application: quick rebuild
 docker-compose down && docker-compose up -d --build
 
 # Tail logs while testing
-journalctl -u <appid> -f &   # Deb
+journalctl -u <system_id> -f &   # Deb
 docker logs -f <appid> &     # Docker
 ```
 
@@ -215,7 +229,7 @@ docker logs -f <appid> &     # Docker
 
 | Issue | Possible Cause | Solution |
 |---|---|---|
-| Service fails to start | Missing dependencies or incorrect path | Check `journalctl -u <appid>`, verify `ExecStart` path |
+| Service fails to start | Missing dependencies or incorrect path | Check `journalctl -u <system_id>`, verify `ExecStart` path |
 | Port conflict | Another service using the same port | `ss -tlnp \| grep <port>`, switch to an available port |
 | Permission denied | Incorrect file ownership or permissions | Verify `User`/`Group` in service file, check file ownership |
 | Web UI inaccessible | Service not listening or firewall blocking | Check if service is running, verify port binding (`0.0.0.0` not `127.0.0.1`) |
