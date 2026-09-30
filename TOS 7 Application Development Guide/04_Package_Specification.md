@@ -40,7 +40,7 @@ TOS 7 applications follow a clearly defined lifecycle:
 | Install | App Center (user clicks "Install" button) | Pull image, create volumes | Image available, data directories created | Platform automatically executes the installation process; no additional developer intervention required |
 | Start | App Center (user clicks "Start" button) / `docker-compose up` | Start container | Service accessible | Users can also manually start via command line, consistent with platform operation logic |
 | Stop | App Center (user clicks "Stop" button) / `docker-compose down` | Stop container | Service stopped, data retained | Only stops the container process; mounted data volumes are not deleted |
-| Upgrade | App Center (user clicks "Update" button when a new version is available) | Pull new image, rebuild container | Zero-downtime or brief downtime | It is recommended that applications support smooth upgrades to avoid data interruption |
+| Upgrade | Not supported in the current TOS version (cannot be triggered via App Center, see Chapter 9 · Section 6) | N/A — uninstall and reinstall required | N/A | Docker applications do not support platform upgrades in the current version |
 | Uninstall | App Center (user clicks "Uninstall" button) | Remove container, optionally clean up volumes | All resources released | Users can choose whether to retain data volumes to avoid accidental data deletion |
 
 > Note: "App Center" refers to the built-in application management interface of the TOS system. Install/start/stop/upgrade/uninstall operations performed by users through this interface will trigger the corresponding lifecycle processes.In the current TOS version, upgrade is not supported for Docker applications.(See [Chapter 9 · Section 6](09_Docker_Development.md#96-lifecycle-operations-install-upgrade-uninstall) for implementation details and data retention policies.)
@@ -190,6 +190,7 @@ esac
 
 
 **Docker Application Upgrades:**
+> ⚠️ **Current Status:** The platform does **not** support Docker application upgrades in the current TOS version (see [Chapter 9 · Section 6](09_Docker_Development.md#96-lifecycle-operations-install-upgrade-uninstall)). The steps below are provided as future-plan reference and for the uninstall-then-reinstall scenario only.
 - Pull new image tags
 - Rebuild containers using existing volume mounts
 - Preserve data across upgrades through persistent volumes (the platform resolves them to the application data root `/Volume<N>/DockerAppData/<appid>/`)
