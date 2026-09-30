@@ -152,7 +152,7 @@ After passing the review, the application will be listed on the TOS App Center w
 - The application `id` (in config.ini) **cannot be changed** once published
 - The application display name (in app.lang) can be updated in new versions
 - If the application `id` needs to be changed, it must be submitted as a brand new application (new listing, new review)
-- The old application must go through the application delisting process (see Section 17.4)
+- The old application must go through the application delisting process (see Section 17.2)
 
 ---
 
