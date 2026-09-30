@@ -55,7 +55,8 @@ jobs:
 
       - name: Build deb package
         run: |
-          dpkg-deb --build ./app-root ./<appid>_${{ github.event.release.tag_name }}_${{ matrix.arch }}.deb
+          # File name is not validated by the platform; <appid>_<platform>.deb (e.g. myapp_x86_64.deb) is only the recommended form (see 4.2.4)
+          dpkg-deb --build ./app-root ./<appid>_${{ matrix.arch }}.deb
 
       - name: Validate package
         run: |
@@ -177,15 +178,10 @@ jobs:
           import json
           config = json.load(open('config.ini'))
           required = ['id', 'icon', 'publisher', 'exec', 'version', 'low_version',
-                      'category', 'depend', 'platform', 'application_type', 'user',
-                      'all_user_display', 'allow_open_in_mobile']
+                      'category', 'platform', 'application_type', 'user']
+          # 必填字段以用户确认清单为准
           for field in required:
               assert field in config, f'Missing required field: {field}'
-          
-          # Validate Deb-specific fields
-          if config['application_type'] == 'deb':
-              assert config.get('system_id'), 'Deb application must have system_id'
-              assert config.get('package'), 'Deb application must have package'
           
           # Validate category count
           assert len(config['category']) <= 3, 'Maximum 3 categories'
@@ -227,7 +223,7 @@ jobs:
 
 ```
 
-> **Gitee Actions (China-based Developers):** For developers hosting on Gitee, adapt the GitHub Actions workflows to the Gitee CI/CD format. Complete Gitee CI/CD templates are available on the TOS Developer Platform. Gitee uses the `gitee-ci.yml` configuration format. Please refer to the Gitee documentation for environment setup.
+> **Gitee Actions (China-based Developers):** For developers hosting on Gitee, adapt the GitHub Actions workflows to the Gitee CI/CD format. Complete Gitee CI/CD templates are available on the TNAS Developer Platform. Gitee uses the `gitee-ci.yml` configuration format. Please refer to the Gitee documentation for environment setup.
 
 ### 14.4 Release & Upload
 
@@ -235,7 +231,7 @@ After a successful build:
 
 1. Create a GitHub Release with the deb package and checksums
 2. Update the repository's config.ini and app.lang if needed
-3. Submit the new version through the TOS Developer Platform
+3. Submit the new version through the TNAS Developer Platform
 4. When submitting the version on the Developer Platform, select the Release (tag) and the package you just uploaded
 
 ---
