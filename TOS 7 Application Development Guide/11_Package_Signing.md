@@ -11,7 +11,7 @@
   > **Note:** Developers do not need to manually create `DEBIAN/md5sums`; `dpkg-deb` automatically generates it during build.
 - Developers should provide SHA-256 checksums alongside deb packages:
   ```bash
-  sha256sum <appid>_<version>_amd64.deb > <appid>_<version>_amd64.deb.sha256
+  sha256sum <appid>_x86_64.deb > <appid>_x86_64.deb.sha256
   ```
 
 **Docker Applications:**
@@ -23,7 +23,7 @@
 
 ### 11.2 Publisher Trust
 
-The TOS Developer Platform establishes publisher trust through:
+The TNAS Developer Platform establishes publisher trust through:
 
 1. **Developer Account Verification**: Registration requires email verification
 2. **Application Review**: All submissions undergo manual security review
