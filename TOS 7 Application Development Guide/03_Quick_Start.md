@@ -49,8 +49,8 @@ Based on your application type, use the corresponding GitHub template repository
 # ./<app_root_directory>/usr/local/<appid>/config.ini      (NOT at the deb root)
 # ./<app_root_directory>/usr/local/<appid>/<appid>.lang
 # ./<app_root_directory>/usr/local/<appid>/images/icons/<appid>.svg
-dpkg-deb --build ./<app_root_directory> ./<appid>_<version>_<arch>.deb
-sudo dpkg -i <appid>_<version>_<arch>.deb
+dpkg-deb --build ./<app_root_directory> ./<appid>_<platform>.deb
+sudo dpkg -i <appid>_<platform>.deb
 sudo systemctl status <system_id>
 
 # Docker App: Start testing
