@@ -12,9 +12,9 @@
 |---|---|---|
 | Valid JSON syntax (no comments, no trailing commas, no single quotes outside double quotes) | Validate using `python3 -m json.tool` | 8.4 config.ini Specification |
 | No single quotes, no inline comments | JSON standard only allows double quotes; `//` or `/* */` are treated as comments | 8.4 config.ini Specification |
-| All required fields present (id/version/system_id/package/platform/type/name/icon/path, etc.) | Check against the required fields checklist item by item | 8.4.3 Key Rules |
-| type and open_path are mutually exclusive (both cannot exist) | Docker apps use the `type` field, Deb apps use the `open_path` field | 8.4.2 Field Reference |
-| path field must use `${ip}` placeholder; no hardcoded IP or domain | All URL-type path must be written as `https://${ip}:port/` | 8.4.3 Key Rules |
+| All required fields present (id/icon/publisher/exec/version/low_version/category/platform/application_type/user) | Check against the user-confirmed required fields checklist item by item (必填字段以用户确认清单为准) | 8.4.3 Key Rules |
+| type and open_path are mutually exclusive (both cannot exist) | Deb iframe apps use the `type` field; Deb external-open and Docker apps use the `open_path` field. They are mutually exclusive and cannot coexist | 8.4.2 Field Reference |
+| path field must use `${ip}` placeholder; no hardcoded IP or domain | All URL-type path must be written as `http://${ip}:<port>` | 8.4.3 Key Rules |
 | platform field matches the actual submitted package architecture | e.g., if platform declares `x86_64`, binaries in the package must be x86_64 architecture | 8.4.2 Field Reference |
 
 #### app.lang Validation
@@ -48,7 +48,7 @@
 
 | Check Item | Description | Reference |
 |---|---|---|
-| Docker app `depend` field must include `DockerEngine` | Without it, the Docker environment cannot be guaranteed ready at install time | 5.2 Declaring Runtime Dependencies |
+| Docker app `depend` field must include `DockerEngine` | Without it, the Docker environment cannot be guaranteed ready at install time | 8.4.2 Field Reference |
 
 #### Version Rule Validation
 
@@ -78,8 +78,8 @@
 **config.ini:**
 - JSON without comments (`//`, `/* */`), no trailing commas
 - No single quotes; all strings use double quotes
-- All required fields present: `id` / `version` / `system_id` / `package` / `platform` / `type` / `name` / `icon` / `path`, etc.
-- `type` and `open_path` mutually exclusive: Docker apps use `type` only; Deb apps use `open_path` only
+- All required fields present: `id` / `icon` / `publisher` / `exec` / `version` / `low_version` / `category` / `platform` / `application_type` / `user` (必填字段以用户确认清单为准)
+- `type` and `open_path` are mutually exclusive: Deb iframe apps use `type` only; Deb external-open and Docker apps use `open_path` only; the two must not coexist
 - `path` field must use `${ip}` placeholder; hardcoded IP, domain, or localhost is prohibited
 - `version` / `system_id` / `package` version numbers consistent (recommended only — the platform does not validate this)
 - `platform` field matches actual submitted package architecture
@@ -231,7 +231,7 @@ Permanent restriction is an irreversible penalty. The platform will send a forma
 | Manual Review | 3–5 business days | Comprehensive security/functionality/compliance review |
 | Publication & Listing | 1–2 business days | Listed in App Center after approval |
 
-> The total review cycle is typically 5–8 business days. Initial review results from submission are usually available within 1–2 business days; you can check progress in real time on the Developer Platform. Peak periods may cause delays; please plan your submission timing accordingly.
+> The total review cycle is typically 5–9 business days (Initial Review 1–2 + Manual Review 3–5 + Publication & Listing 1–2). Initial review results from submission are usually available within 1–2 business days; you can check progress in real time on the Developer Platform. Peak periods may cause delays; please plan your submission timing accordingly.
 
 ---
 
