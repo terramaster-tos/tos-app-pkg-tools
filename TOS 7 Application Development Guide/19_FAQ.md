@@ -6,7 +6,7 @@
 Review the rejection reason, correct it, and resubmit. Common rejection reasons include: JSON format errors, missing language files, port conflicts, icon format or icon path issues. Refer to the Review Standards chapter for details.
 
 **Q: How long does the review take?**  
-Usually 3–5 business days. Initial submissions may take longer (full manual review of all content). Update version reviews are faster (typically 1–3 business days).
+The total review cycle is usually 5–9 business days (of which manual review is 3–5 business days). Initial submissions may take longer (full manual review of all content); update version reviews are faster (typically 1–3 business days).
 
 **Q: Can the app ID be changed?**  
 It cannot be changed after creation. Please confirm the app ID carefully before publishing.
@@ -14,7 +14,7 @@ It cannot be changed after creation. Please confirm the app ID carefully before 
 ### 19.2 Technical Issues
 
 **Q: What should I do about port conflicts?**  
-- Use of system-reserved ports is prohibited: 22, 80, 443, 8181, 5050
+- Use of system-reserved ports is prohibited: 22, 80, 443, 445, 3306, 5050, 5432, 6379, 8181, 8443 (authoritative list: Appendix B of Chapter 20)
 - Recommended range: 8000–19999
 - Detect port occupation in a preinst script before installation
 - Different apps use different ports; the platform does not auto-assign ports
