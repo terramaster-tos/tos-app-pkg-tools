@@ -42,6 +42,8 @@ The following ports are reserved by the TOS system and must not be used by appli
 
 Recommended app port range: **8000–19999** (excluding ports already occupied by installed apps). If ports in the recommended range are occupied, you may use **49152–65535** (dynamic port range), but it must be explicitly declared in the configuration.
 
+> See also Chapter 12 §12.8 Common Port Reference (which includes a list of common community-occupied ports).
+
 ### Appendix C: TOS System Directories
 
 | Path | Description |
@@ -51,7 +53,7 @@ Recommended app port range: **8000–19999** (excluding ports already occupied b
 | `/Volume*/@apps/<appid>/logs/` | App logs — logical path for the app: `/usr/local/<appid>/logs/` |
 | `/Volume<N>/DockerAppData/<appid>/` | Docker app data (config and business data) |
 | `/usr/local/system_app_data/<appid>/` | System embedded app directory (for built-in apps only) |
-| `/etc/systemd/system/<appid>.service` | Systemd service file |
+| `/etc/systemd/system/<system_id>.service` | Systemd service file (this path is NOT guaranteed to exist — the platform registers the unit from the application directory; do not hardcode it) |
 
 > **Note:** These are the paths your application uses. After installation the platform maps `/usr/local/<appid>/` onto the volume the user chose at installation, where the same directory physically lives at `/Volume<N>/@apps/<appid>/`. `*` is documentation notation for that volume number (e.g., Volume1, Volume2) — the platform does **not** expand it, so never write `/Volume*/…` into a compose file, a systemd unit, a lifecycle script, or any other machine-read configuration.
 > - For non-embedded apps (both official and third-party), all files live in the application directory, which the application sees as `/usr/local/<appid>/`; the platform resolves it onto the user-selected volume at `/Volume<N>/@apps/<appid>/`.
@@ -73,6 +75,8 @@ Recommended app port range: **8000–19999** (excluding ports already occupied b
 | TOS 7.x | Ubuntu 22.04-compatible | 2.35 | 3.10 | 20.10+ (or higher) | 18.x (or higher) |
 
 > Note: TOS 7.x series minor versions will maintain compatibility with TOS 7.0. Apps developed for TOS 7.0 will run without additional adaptation. For the latest version-specific details, refer to the official TOS release notes or the Developer Platform.
+
+> **Note:** The Node.js / Python3 / Docker columns above are for reference within Docker containers only. Deb applications must not directly depend on these versions — declare their own runtime dependencies in DEBIAN/control.
 
 ### Appendix F: Language File Quick Template
 
@@ -196,7 +200,7 @@ Use this checklist when upgrading your app to a new major version:
 - [ ] Configuration files are backed up before modification
 - [ ] New dependencies are declared in DEBIAN/control
 - [ ] Service files are updated (if needed)
-- [ ] Version numbers are incremented in config.ini, DEBIAN/control, and app.lang
+- [ ] Version numbers are incremented in config.ini and DEBIAN/control (the platform does not enforce this); if release notes are updated, sync the app.lang entries accordingly
 - [ ] Changelog/release notes are updated
 - [ ] Upgrade path tested: install old version → add data → upgrade → verify data
 - [ ] Rollback path tested: downgrade or restore from backup
@@ -279,7 +283,7 @@ Complete downloadable config file templates for all app types are available on t
 | root in systemd | `User=root` in service file | Use dedicated user: `User=<appid>` |
 | Docker privileged mode | `privileged: true` in compose | Remove; use fine-grained capabilities |
 | Missing checksum | No .sha256 file submitted | Run `sha256sum <file> > <file>.sha256` |
-| Version not incremented | v1.0.0 → v1.0.0 (same version) | Increment version: v1.0.0 → v1.0.1 |
+| Version not incremented | v1.0.0 → v1.0.0 (same version) | Not rejected — but the App Center compares versions numerically, so a non-incremented version will not reach existing users as an update; incrementing is recommended (v1.0.0 → v1.0.1) |
 
 ### Appendix L: Terminology & Definitions
 
