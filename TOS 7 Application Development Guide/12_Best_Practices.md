@@ -73,7 +73,7 @@ Follow a consistent directory layout to ensure maintainability and compatibility
 
 > **Note:** These are the paths your application uses. After installation the platform maps `/usr/local/<appid>/` onto the volume the user chose at installation, where the same directory physically lives at `/Volume<N>/@apps/<appid>/`. `*` is documentation notation for that volume number (e.g., Volume1, Volume2) — the platform does **not** expand it, so never write `/Volume*/…` into a compose file, a systemd unit, a lifecycle script, or any other machine-read configuration.
 > - Runtime data can be safely deleted without losing user business data
-> - User business data must be backed up before app upgrades — the shared folder for Deb applications, the application data root `/Volume<N>/DockerAppData/<appid>/` for Docker applications
+> - User business data must be backed up before app upgrades (Deb applications) or before uninstall/reinstall (Docker applications — the current platform does not support Docker app upgrades, see [Chapter 9 · Section 6](09_Docker_Development.md#96-lifecycle-operations-install-upgrade-uninstall)) — the shared folder for Deb applications, the application data root `/Volume<N>/DockerAppData/<appid>/` for Docker applications
 
 ### 12.3 Logging
 
@@ -81,7 +81,7 @@ Follow a consistent directory layout to ensure maintainability and compatibility
 ```bash
 # Use systemd journal (recommended)
 # All stdout/stderr from the service is automatically captured
-# View logs: journalctl -u <appid>
+# View logs: journalctl -u <system_id>
 
 # Or write to file
 exec >> /usr/local/<appid>/logs/app.log 2>&1
@@ -281,11 +281,13 @@ services:
 | 5050 | TOS Daemon |
 | 5432 | PostgreSQL |
 | 6379 | Redis |
-| 8096 | Jellyfin |
+| 8096 | Jellyfin (common community usage, not TOS-reserved) |
 | 8181 | TOS Nginx |
 | 8443 | TOS HTTPS |
-| 9000 | Portainer |
-| 9090 | Prometheus |
+| 9000 | Portainer (common community usage, not TOS-reserved) |
+| 9090 | Prometheus (common community usage, not TOS-reserved) |
+
+> **Note:** The full list of system-reserved ports is in Appendix B of Chapter 20; 8096/9000/9090 are common community-occupied ports, not TOS-reserved.
 
 ---
 
@@ -388,7 +390,7 @@ container logs                      # access with `docker logs`; do not read int
 4. **Clean the socket before start.** iframe applications **must** run `rm -f /var/api/<appid>.sock` before binding; a stale socket from a previous run causes startup failure (see Section 13.4).
 5. **Rotate logs.** Configure logrotate for file-based logs (daily, keep 30, `copytruncate`) or rely on systemd journal (`journalctl -u <system_id>`) / the configured Docker logging driver.
 6. **Cleanup must match ownership.** `dpkg --remove` removes package-owned files; `dpkg --purge` additionally runs purge-specific cleanup. A path is deleted only when dpkg, App Center, or the package's `postrm` explicitly owns that cleanup. Do not promise deletion of platform or user paths without such a contract.
-7. **Never delete user data on upgrade or uninstall.** Preserve `/Volume<N>/<appid>/` (Deb applications) and `/Volume<N>/DockerAppData/<appid>/` (Docker applications). Preserve application state needed for upgrade, and regenerate only explicitly documented caches.
+7. **Never delete user data on upgrade or uninstall.** Preserve `/Volume<N>/<appid>/` (Deb applications) and `/Volume<N>/DockerAppData/<appid>/` (Docker applications; Docker apps have no platform upgrade path in the current version — uninstall/reinstall is used, see [Chapter 9 · Section 6](09_Docker_Development.md#96-lifecycle-operations-install-upgrade-uninstall)). Preserve application state needed for upgrade, and regenerate only explicitly documented caches.
 8. **Document your runtime footprint.** In your README, declare every path your app creates or writes, the component that creates it, its retention policy, ports, and shared folders.
 
 #### 12.9.6 Application-Declared Runtime File Manifest (Required)
