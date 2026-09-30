@@ -190,10 +190,10 @@ apt install -y dpkg-dev debhelper lintian
 
 ```bash
 # Deb package: Check compliance
-lintian <appid>_<version>_amd64.deb
+lintian <appid>_x86_64.deb
 
 # Deb package: Verify package metadata
-dpkg-deb --info <appid>_<version>_amd64.deb
+dpkg-deb --info <appid>_x86_64.deb
 
 # Docker: Scan image for known vulnerabilities
 trivy image <image>:<tag>
