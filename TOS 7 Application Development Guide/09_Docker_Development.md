@@ -11,7 +11,7 @@ Docker applications run in containers managed by the TOS 7 Docker Engine.
 - Must provide a `docker-compose.yml` compatible with Compose Spec 3.8+
 - Data must be persisted to NAS-accessible directories via volume mounts
 - **Privileged mode is strictly prohibited**
-- **System core ports (22, 80, 443, 8181, 5050) must not be occupied**
+- **System reserved ports (22, 80, 443, 445, 3306, 5050, 5432, 6379, 8181, 8443) must not be occupied** — full list: Appendix B of Chapter 20 / §12.8
 
 
 ### 9.2 Package Structure (`.tar.gz` Archive)
@@ -95,7 +95,7 @@ x-app-meta:
    **Relative-path base:** in `./data:/data`, the `.` is resolved against the directory that contains the `docker-compose.yml` file — the standard Compose behaviour, where relative host paths are resolved against the Compose project directory. The platform then places the resolved directory under the application data root, so the same compose file works no matter which volume the user picks at installation.
 
 5. **Port Mapping**:
-   - Disabled ports: 22, 80, 443, 8181, 5050 (system services)
+   - Disabled ports: 22, 80, 443, 445, 3306, 5050, 5432, 6379, 8181, 8443 (system services — full list: Appendix B of Chapter 20 / §12.8)
    - Recommended range: 8000-19999
    - Verify that the selected port is not in use on the TNAS before submission
 6. **Privileged Mode**: **Strictly prohibited**. The `user` field must be used to specify UID/GID.
@@ -145,7 +145,7 @@ x-app-meta:
 {
   "id": "myapp-docker",
   "icon": "/images/icons/myapp-docker.svg",
-  "publisher": "Developer Name",
+  "publisher": "publisher name",
   "exec": true,
   "open_path": true,
   "help": "https://github.com/example/myapp/wiki",
@@ -154,8 +154,9 @@ x-app-meta:
   "beta": false,
   "low_version": "TOS7.0",
   "category": ["Utilities"],
-  "relation": ["docker", "DockerEngine"],
+  "depend": ["DockerEngine"],
   "platform": "x86_64",
+  "user": "1000:1000",
   "official": "https://example.com",
   "application_type": "docker",
   "compose_project": "myapp-docker",
