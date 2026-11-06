@@ -7,7 +7,7 @@
 > ```
 > <appid>.tar.gz
 > ├── config.ini          # Application metadata (JSON)
-> ├── <appid>.lang        # Multilingual file (14 languages)
+> ├── <appid>.lang        # Multilingual file (26 languages)
 > ├── <appid>.svg         # Application icon (SVG)
 > └── docker-compose.yml  # Container orchestration config
 > ```
@@ -29,7 +29,7 @@ this template for rapid application development.
 # 3. Replace the image in docker-compose.yml with your Docker Hub image
 #    (fixed version tag required — NEVER ":latest")
 # 4. Update config.ini metadata (publisher, version, category, platform, ...)
-# 5. Update <appid>.lang descriptions (all 14 languages required)
+# 5. Update <appid>.lang descriptions (all 26 languages; TOS 7.0 needs first 14)
 # 6. Replace myapp-docker.svg with your own icon (keep the <appid>.svg name)
 # 7. Test locally:
 #    docker compose up -d
@@ -45,7 +45,7 @@ this template for rapid application development.
 ```
 <appid>/
 ├── config.ini              # Application metadata (JSON) — Docker fields included
-├── <appid>.lang            # Multilingual file (14 languages)
+├── <appid>.lang            # Multilingual file (26 languages)
 ├── <appid>.svg             # App icon (SVG; ViewBox recommended 0 0 512 512)
 ├── docker-compose.yml      # Compose Spec 3.8+, all Chapter 9 rules applied
 └── README.md               # ← DELETE before packaging

@@ -1,16 +1,10 @@
 # ============================================================
 # Multilingual file for Docker application template
 # File name MUST be: <appid>.lang  (here: myapp-docker.lang)
-# ALL 14 languages are REQUIRED. Untranslated languages are
-# filled with the English text (per the development guide).
+# 26 languages: TOS 7.0 requires the first 14 sections,
+# TOS 7.1 and later require all 26 (see guide 8.5.1 / Appendix F).
+# Untranslated languages are filled with the English text.
 # ============================================================
-
-[en-us]
-name = "MyApp Docker"
-auth = "Developer Name"
-descript = "A TOS 7 Docker application built with the Docker template. Provides a web interface via Docker container."
-release_note = "1. Initial release."
-important = "Requires DockerEngine to be installed and enabled from the TOS App Center. Docker images must come from Docker Hub."
 
 [zh-cn]
 name = "我的 Docker 应用"
@@ -26,12 +20,26 @@ descript = "使用 Docker 模板構建的 TOS 7 Docker 應用。通過 Docker �
 release_note = "1. 首次發佈。"
 important = "需要從 TOS 應用中心安裝並啟用 DockerEngine。Docker 鏡像必須來自 Docker Hub。"
 
-[fr-fr]
+[en-us]
 name = "MyApp Docker"
 auth = "Developer Name"
-descript = "Une application Docker TOS 7 créée avec le modèle Docker. Fournit une interface web via un conteneur Docker."
-release_note = "1. Version initiale."
-important = "Nécessite l'installation et l'activation de DockerEngine depuis l'App Center TOS."
+descript = "A TOS 7 Docker application built with the Docker template. Provides a web interface via Docker container."
+release_note = "1. Initial release."
+important = "Requires DockerEngine to be installed and enabled from the TOS App Center. Docker images must come from Docker Hub."
+
+[ko-kr]
+name = "MyApp Docker"
+auth = "Developer Name"
+descript = "Docker 템플릿으로 생성된 TOS 7 Docker 애플리케이션. Docker 컨테이너를 통해 웹 인터페이스를 제공합니다."
+release_note = "1. 최초 릴리스."
+important = "TOS 앱 센터에서 DockerEngine 설치 및 활성화가 필요합니다."
+
+[ja-jp]
+name = "MyApp Docker"
+auth = "Developer Name"
+descript = "Docker テンプレートで作成された TOS 7 Docker アプリケーション。Docker コンテナ経由で Web インターフェースを提供します。"
+release_note = "1. 初回リリース。"
+important = "TOS アプリセンターから DockerEngine のインストールと有効化が必要です。"
 
 [de-de]
 name = "MyApp Docker"
@@ -39,6 +47,13 @@ auth = "Developer Name"
 descript = "Eine TOS 7 Docker-Anwendung, erstellt mit der Docker-Vorlage. Bietet eine Weboberfläche über Docker-Container."
 release_note = "1. Erstveröffentlichung."
 important = "DockerEngine muss über die TOS App Center installiert und aktiviert werden."
+
+[fr-fr]
+name = "MyApp Docker"
+auth = "Developer Name"
+descript = "Une application Docker TOS 7 créée avec le modèle Docker. Fournit une interface web via un conteneur Docker."
+release_note = "1. Version initiale."
+important = "Nécessite l'installation et l'activation de DockerEngine depuis l'App Center TOS."
 
 [it-it]
 name = "MyApp Docker"
@@ -61,33 +76,12 @@ descript = "TOS 7 Docker alkalmazás, a Docker sablonnal létrehozva. Webes fel�
 release_note = "1. Első kiadás."
 important = "A DockerEngine telepítése és engedélyezése szükséges a TOS App Centerből."
 
-[ja-jp]
-name = "MyApp Docker"
-auth = "Developer Name"
-descript = "Docker テンプレートで作成された TOS 7 Docker アプリケーション。Docker コンテナ経由で Web インターフェースを提供します。"
-release_note = "1. 初回リリース。"
-important = "TOS アプリセンターから DockerEngine のインストールと有効化が必要です。"
-
-[ko-kr]
-name = "MyApp Docker"
-auth = "Developer Name"
-descript = "Docker 템플릿으로 생성된 TOS 7 Docker 애플리케이션. Docker 컨테이너를 통해 웹 인터페이스를 제공합니다."
-release_note = "1. 최초 릴리스."
-important = "TOS 앱 센터에서 DockerEngine 설치 및 활성화가 필요합니다."
-
 [pl-pl]
 name = "MyApp Docker"
 auth = "Developer Name"
 descript = "Aplikacja Docker TOS 7 utworzona przy użyciu szablonu Docker. Zapewnia interfejs WWW przez kontener Docker."
 release_note = "1. Pierwsze wydanie."
 important = "Wymaga instalacji i włączenia DockerEngine z TOS App Center."
-
-[ru-ru]
-name = "MyApp Docker"
-auth = "Developer Name"
-descript = "Docker-приложение TOS 7, созданное с использованием шаблона Docker. Предоставляет веб-интерфейс через Docker-контейнер."
-release_note = "1. Первый выпуск."
-important = "Требуется установка и включение DockerEngine из TOS App Center."
 
 [tr-tr]
 name = "MyApp Docker"
@@ -96,9 +90,100 @@ descript = "Docker şablonu ile oluşturulmuş bir TOS 7 Docker uygulaması. Doc
 release_note = "1. İlk sürüm."
 important = "TOS App Center'dan DockerEngine kurulması ve etkinleştirilmesi gerekir."
 
+[ru-ru]
+name = "MyApp Docker"
+auth = "Developer Name"
+descript = "Docker-приложение TOS 7, созданное с использованием шаблона Docker. Предоставляет веб-интерфейс через Docker-контейнер."
+release_note = "1. Первый выпуск."
+important = "Требуется установка и включение DockerEngine из TOS App Center."
+
 [pt-pt]
 name = "MyApp Docker"
 auth = "Developer Name"
 descript = "Uma aplicação Docker TOS 7 criada com o modelo Docker. Fornece uma interface web através de contentor Docker."
 release_note = "1. Versão inicial."
 important = "Requer a instalação e ativação do DockerEngine a partir do TOS App Center."
+
+[cs-cz]
+name = "MyApp Docker"
+auth = "Jméno vývojáře"
+descript = "Docker aplikace TOS 7 vytvořená pomocí šablony Docker. Poskytuje webové rozhraní prostřednictvím kontejneru Docker."
+release_note = "1. První vydání."
+important = "Vyžaduje instalaci a povolení DockerEngine z TOS App Center. Obrázky Docker musí pocházet z Docker Hub."
+
+[da-dk]
+name = "MyApp Docker"
+auth = "Udviklernavn"
+descript = "En TOS 7 Docker-applikation bygget med Docker-skabelonen. Giver en webgrænseflade via Docker-container."
+release_note = "1. Første udgivelse."
+important = "Kræver, at DockerEngine installeres og aktiveres fra TOS App Center. Docker-images skal komme fra Docker Hub."
+
+[nl-nl]
+name = "MyApp Docker"
+auth = "Naam ontwikkelaar"
+descript = "Een TOS 7 Docker-applicatie gebouwd met de Docker-sjabloon. Biedt een webinterface via een Docker-container."
+release_note = "1. Eerste release."
+important = "Vereist dat DockerEngine is geïnstalleerd en ingeschakeld via TOS App Center. Docker-images moeten van Docker Hub komen."
+
+[nb-no]
+name = "MyApp Docker"
+auth = "Utviklernavn"
+descript = "En TOS 7 Docker-applikasjon bygget med Docker-malen. Gir et webgrensesnitt via Docker-container."
+release_note = "1. Første utgivelse."
+important = "Krever at DockerEngine installeres og aktiveres fra TOS App Center. Docker-images må komme fra Docker Hub."
+
+[sv-se]
+name = "MyApp Docker"
+auth = "Utvecklarnamn"
+descript = "En TOS 7 Docker-applikation byggd med Docker-mallen. Tillhandahåller ett webbgränssnitt via Docker-container."
+release_note = "1. Första utgåvan."
+important = "Kräver att DockerEngine installeras och aktiveras från TOS App Center. Docker-avbildningar måste komma från Docker Hub."
+
+[el-gr]
+name = "MyApp Docker"
+auth = "Όνομα προγραμματιστή"
+descript = "Μια εφαρμογή Docker TOS 7 που δημιουργήθηκε με το πρότυπο Docker. Παρέχει διεπαφή web μέσω container Docker."
+release_note = "1. Αρχική έκδοση."
+important = "Απαιτείται η εγκατάσταση και ενεργοποίηση του DockerEngine από το TOS App Center. Οι εικόνες Docker πρέπει να προέρχονται από το Docker Hub."
+
+[ro-ro]
+name = "MyApp Docker"
+auth = "Numele dezvoltatorului"
+descript = "O aplicație Docker TOS 7 creată cu șablonul Docker. Oferă o interfață web prin containerul Docker."
+release_note = "1. Prima versiune."
+important = "Necesită instalarea și activarea DockerEngine din TOS App Center. Imaginile Docker trebuie să provină din Docker Hub."
+
+[th-th]
+name = "MyApp Docker"
+auth = "ชื่อผู้พัฒนา"
+descript = "แอปพลิเคชัน Docker สำหรับ TOS 7 ที่สร้างด้วยเทมเพลต Docker มีอินเทอร์เฟซเว็บผ่านคอนเทนเนอร์ Docker"
+release_note = "1. เผยแพร่ครั้งแรก"
+important = "ต้องติดตั้งและเปิดใช้งาน DockerEngine จาก TOS App Center อิมเมจ Docker ต้องมาจาก Docker Hub"
+
+[vi-vn]
+name = "MyApp Docker"
+auth = "Tên nhà phát triển"
+descript = "Ứng dụng Docker TOS 7 được tạo bằng mẫu Docker. Cung cấp giao diện web thông qua vùng chứa Docker."
+release_note = "1. Phát hành lần đầu."
+important = "Yêu cầu cài đặt và bật DockerEngine từ TOS App Center. Image Docker phải đến từ Docker Hub."
+
+[id-id]
+name = "MyApp Docker"
+auth = "Nama Pengembang"
+descript = "Aplikasi Docker TOS 7 yang dibuat dengan templat Docker. Menyediakan antarmuka web melalui kontainer Docker."
+release_note = "1. Rilis awal."
+important = "Memerlukan DockerEngine yang terpasang dan aktif dari TOS App Center. Image Docker harus berasal dari Docker Hub."
+
+[ar-sa]
+name = "MyApp Docker"
+auth = "اسم المطور"
+descript = "تطبيق Docker لنظام TOS 7 تم إنشاؤه باستخدام قالب Docker. يوفر واجهة ويب عبر حاوية Docker."
+release_note = "1. الإصدار الأول."
+important = "يتطلب تثبيت DockerEngine وتفعيله من TOS App Center. يجب أن تأتي صور Docker من Docker Hub."
+
+[he-il]
+name = "MyApp Docker"
+auth = "שם המפתח"
+descript = "אפליקציית Docker ל-TOS 7 שנבנתה עם תבנית Docker. מספקת ממשק אינטרנט דרך מכולת Docker."
+release_note = "1. גרסה ראשונית."
+important = "נדרשת התקנה והפעלה של DockerEngine מ-TOS App Center. תמונות Docker חייבות להגיע מ-Docker Hub."
