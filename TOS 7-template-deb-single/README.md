@@ -25,7 +25,7 @@ A ready-to-use template for building TOS 7 Deb applications in single-package mo
 ```
 myapp/
 ├── config.ini              # Application metadata (JSON format)
-├── myapp.lang              # Multilingual file (14 languages required)
+├── myapp.lang              # Multilingual file (26 languages; TOS 7.0 needs first 14)
 ├── myapp.env               # Environment variables (loaded by systemd via EnvironmentFile)
 ├── build.sh                # Build script (includes pre-build validation)
 ├── bin/
