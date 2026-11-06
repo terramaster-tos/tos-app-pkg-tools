@@ -12,7 +12,7 @@ The total review cycle is usually 5–9 business days (of which manual review is
 It cannot be changed after creation. Please confirm the app ID carefully before publishing — in particular, it must not start with the reserved `tos` prefix (see 8.4.2 / 8.11).
 
 **Q: Can my app ID start with `tos`?**  
-No. `tos` is reserved by the platform in the nginx route/command namespace: an app ID starting with `tos` (for example `tos-log-server`) collides with the platform's own nginx entries and the application page cannot be opened normally; the nginx names derived from the app ID (`nginx/<appid>.conf`, the route prefix) must not start with `tos` either (FB-20261017-002; see 8.4.2 / 8.11). Choose a different app ID before publishing — the app ID cannot be changed after creation.
+No. `tos` is reserved by the platform in the nginx route/command namespace: an app ID starting with `tos` (for example `tos-log-server`) collides with the platform's own nginx entries and the application page cannot be opened normally; the nginx names derived from the app ID (`nginx/<appid>.conf`, the route prefix) must not start with `tos` either (see 8.4.2 / 8.11). Choose a different app ID before publishing — the app ID cannot be changed after creation.
 
 ### 19.2 Technical Issues
 
@@ -52,11 +52,14 @@ Early TOS configuration systems used the `.ini` extension. To maintain backward 
 4. Verify that the frontend correctly includes the `Cookie` and `X-Csrf-Token` headers
 
 **Q: How do I debug WebUI external-opening apps?**  
-1. Check that the backend is listening on the port expected by the app's `path` field
-2. Check the nginx configuration file path and syntax: `nginx -t`
-3. Directly access `http://<TNAS_IP>:<port>` to confirm the backend responds correctly
-4. If the portal block (`location /<app_id>/`) carries `proxy_pass`, verify that its port matches the backend listening port. A portal block that only sets the proxy headers (no `proxy_pass`) is compliant when the application ships its own frontend Web panel and its service is reachable through the application socket `/var/api/<app_id>.sock`; adding `proxy_pass` to the portal block is only an optional improvement and must never be used as a ground for rejection (see 8.3.2 / 8.11; advisory item list: 12 §12.10)
-5. If the app page still cannot be opened, check the App ID and the nginx names derived from it (`nginx/<appid>.conf` and the route prefix): names starting with the reserved `tos` prefix collide with the platform's own nginx entries and must be renamed (FB-20261017-002; see 8.4.2 / 8.11).
+First determine which access mode the application uses — port listening (8.3.2.1) or `.sock` listening (8.3.2.2) — because the address, the required files and the debuggable failure points differ.
+1. **Port mode:** check that the backend is listening on the port used in the app's `path` field, then access `http://<TNAS_IP>:<port>` directly to confirm the backend responds. No nginx file is involved, and the platform does not authenticate this page — the application handles access control itself.
+2. **.sock mode:** check that `/var/api/<app_id>.sock` exists and that `webui.bz2` is in the package; check the nginx configuration file path and syntax with `nginx -t`; access `http://<TNAS_IP>:8181/<app_id>/` for the page and `http://<TNAS_IP>:8181/v2/proxy/<app_id>/` for the API, confirming the `Cookie` + `X-Csrf-Token` headers are present (8.9 / 8.10).
+3. If the portal block (`location /<app_id>/`) carries `proxy_pass`, verify that its port matches the backend listening port. A portal block that only sets the proxy headers (no `proxy_pass`) is compliant when the application ships its own frontend Web panel and its service is reachable through the application socket `/var/api/<app_id>.sock`; adding `proxy_pass` to the portal block is only an optional improvement and must never be used as a ground for rejection (see 8.3.2.2 / 8.11; advisory item list: 12 §12.10)
+4. If the app page still cannot be opened, check the App ID and the nginx names derived from it (`nginx/<appid>.conf` and the route prefix): names starting with the reserved `tos` prefix collide with the platform's own nginx entries and must be renamed (see 8.4.2 / 8.11).
+
+**Q: Why can a non-administrator user not open my application, and what response should the app give?**  
+A non-administrator TOS user has no permission to open an application page by default, and has no App Center module permission — an administrator must authorize the user, after which the entry point is the application icon on the desktop (see §8.3.2 / 10.5.1). In the application: a missing or expired session returns `401` and the user is sent to the TOS login page; an authenticated user without permission gets `403` and the page must show "no permission" instead of rendering the application content (see 8.9 / 8.10).
 
 ---
 

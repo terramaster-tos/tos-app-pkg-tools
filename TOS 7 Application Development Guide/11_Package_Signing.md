@@ -5,7 +5,7 @@
 **Deb Packages:**
 - Deb packages do **not** need to include `DEBIAN/md5sums`, and the platform **no longer validates** md5sums (this was a legacy requirement of the old TPK format and has been cancelled). If `dpkg-deb` generates an `md5sums` file automatically, it does not affect submission.
 - **Packaging method is not restricted**: a package may be built with `dpkg-deb --build`, or the deb package structure may be organized manually — as long as the result is a valid deb package that conforms to the specification.
-- Developers should provide SHA-256 checksums alongside deb packages:
+- A SHA-256 checksum file is **recommended but not required**. The platform generates the `.sha256` value of the package itself when the version is submitted, and audit-time integrity checking uses that platform-generated value as the baseline:
   ```bash
   sha256sum <appid>_x86_64.deb > <appid>_x86_64.deb.sha256
   ```
@@ -28,10 +28,10 @@ The TNAS Developer Platform establishes publisher trust through:
 
 > **Future Plan:** TerraMaster plans to introduce GPG key-based package signing for Deb applications and integrate Docker Content Trust for container images.
 
-Until the full GPG signing scheme is implemented, a SHA-256 checksum file is required alongside every package. Note the confirmed platform behaviour: the platform does not read or verify the `.sha256` attachment when a version is submitted; verification, if any, is performed outside the submission flow.
-1. Provide a SHA-256 checksum file for every binary artifact
-2. The platform does not verify checksums at submission time
-3. Ensure the published checksum matches the uploaded package
+Until the full GPG signing scheme is implemented, a SHA-256 checksum file is **recommended (not mandatory)** alongside every package. Confirmed platform behaviour: the platform does not read a developer-supplied `.sha256` attachment at submission time — it generates the checksum from the package itself and marks that package with the generated value; integrity checking during audit compares against that platform-generated value.
+1. Providing a SHA-256 checksum file for each binary artifact is recommended
+2. The platform generates the checksum value at submission; a developer-supplied `.sha256` is not read
+3. A missing `.sha256` attachment is not a submission or review failure
 4. Maintainers must enable two-factor authentication (2FA) on their repository accounts (GitHub/Gitee)
 
 ### 11.3 Security Audit Requirements
@@ -50,7 +50,7 @@ All applications must pass a security audit during review:
 | No script injection vulnerabilities | ✅ | ✅ |
 | No path traversal vulnerabilities | ✅ | ✅ |
 | No sensitive information in logs | ✅ | ✅ |
-| Checksums match uploaded artifacts | ✅ | ✅ |
+| Package integrity verified against the platform-generated baseline | ✅ | ✅ |
 
 ### 11.4 Supply Chain Security
 

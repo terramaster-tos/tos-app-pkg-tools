@@ -193,7 +193,7 @@ For applications where the backend is a local executable service, the frontend i
 7. `/var/api` must be auto-created if it does not exist; old socket files must be cleaned up before startup.
 8. Socket file permissions must allow platform proxy access.
 9. Frontend requests to backend interfaces must go through the platform proxy path, with the fixed format `/v2/proxy/<app_id>/<api_name>`.
-10. Frontend requests must carry the platform authentication headers, including `X-Csrf-Token` and `Cookie` in the request headers.
+10. Frontend requests must carry **both** the platform `Cookie` header and the `X-Csrf-Token` header. This is the **only** compliant authentication channel — a missing header means the request is unauthenticated (see 8.9 / 8.10); a `Cookie`-only request is not accepted.
 
 **Socket File Specification:**
 - Permission mode: `0660` (owner and group read/write)
@@ -202,8 +202,8 @@ For applications where the backend is a local executable service, the frontend i
 - Supports at least 100 concurrent connections
 - Idle connection timeout: 30 seconds
 
-11. Frontend requests to backend interfaces must go through the platform proxy path: `/v2/proxy/<app_id>/<api_name>`.
-12. Frontend requests must carry the platform authentication headers.
+11. Frontend requests to backend interfaces must go through the platform proxy path: `/v2/proxy/<app_id>/<api_name>` (see 8.9).
+12. Frontend requests must carry **both** the `Cookie` and the `X-Csrf-Token` header, in the exact form defined in 8.10 — there is no alternative or `Cookie`-only channel.
 
 **CORS and Preflight Request Configuration:**
 The backend must handle CORS preflight requests (OPTIONS method) for the platform proxy. Allow the following:
@@ -214,7 +214,16 @@ The backend must handle CORS preflight requests (OPTIONS method) for the platfor
 
 #### 8.3.2 WebUI External Open (New Tab)
 
-For applications where the backend is a local executable service, the frontend is a static WebUI, opened in a new browser tab.
+For applications where the backend is a local executable service, the frontend is a static WebUI, opened in a new browser tab, outside the TOS desktop iframe.
+
+**Access permission:** only administrators can open an application page by default; an administrator may grant a non-administrator user access to the application. Non-administrator users have **no permission for the App Center module**, so their only entry point is the application icon on the desktop (shown after the administrator grants access). Do not assume that a non-administrator can reach the application through the App Center, and do not design an entry point that bypasses the platform. Authentication and permission handling are described in 8.9 and 8.10.
+
+**Two mutually exclusive access modes.** Choose the mode according to how the application can be reached — through its own listening port, or through the platform socket/nginx route:
+
+| Access mode | Address published in `config.ini.path` | Platform authentication | Required extra files |
+|---|---|---|---|
+| **Port listening** (§8.3.2.1) | `http://${ip}:<port>` — the application's own listening port | **Not available** — traffic never passes through the platform, so the platform cannot authenticate it | Standard payload only |
+| **.sock listening** (§8.3.2.2) | `/<app_id>/` — route resolved by nginx | **Available** — `Cookie` + `X-Csrf-Token` (see 8.9 / 8.10) | `nginx/<app_id>.conf`, `webui.bz2` |
 
 **Directory Structure:**
 
@@ -224,12 +233,12 @@ For applications where the backend is a local executable service, the frontend i
 ├── bin/
 │   └── <binary_name>
 ├── <app_id>.lang
-├── webui.bz2                     # 【Required】Frontend page archive
+├── webui.bz2                     # 【Required for .sock access】Frontend page archive (see 8.3.2.2)
 ├── images/
 │   └── icons/
 │       └── <app_id>.svg
 ├── nginx/
-│   └── <app_id>.conf             # 【Required】Nginx configuration file
+│   └── <app_id>.conf             # 【Required for .sock access】Nginx configuration file (see 8.3.2.2)
 ├── init.d/
 │   └── <system_id>.service
 ├── <app_id>.env                  # 【Optional】Environment variable configuration file
@@ -266,14 +275,29 @@ For applications where the backend is a local executable service, the frontend i
 
 1. `open_path` must be `true`.
 2. The `path` field must resolve to the externally provided HTTP interface. Deb applications accept **both** forms: the full URL `http://${ip}:<port>` and the route form `/<app_id>/`. The nginx configuration file (see below) maps that address to the application's Unix socket or to its backend listening port.
-3. The application package must include an nginx configuration file `<app_id>.conf`, whose filename must correspond to `config.ini.id`.
-4. The backend directly listens on `<listen_port>` to provide HTTP interfaces.
+3. The `.sock` access mode requires an nginx configuration file `<app_id>.conf` in the package, whose filename must correspond to `config.ini.id` (see 8.3.2.2); the port access mode does not use nginx.
+4. The backend must be reachable either through its own listening port `<listen_port>` (port mode, §8.3.2.1) or through the application socket `/var/api/<app_id>.sock` (`.sock` mode, §8.3.2.2).
 5. The deb package must contain an executable program, located at `/usr/local/<app_id>/bin/<binary_name>`.
 6. The `config.ini.package` field specification must strictly conform to the Debian package `package` specification.
+
+##### 8.3.2.1 Port Listening Access
+
+In this mode the application listens on its own port `<listen_port>` and the address published in `config.ini.path` is `http://${ip}:<port>`. **Every route is resolved by that port**: the application page itself and all of its functional requests are sent directly to `http://<ip>:<port>`, without passing through the platform.
+
+Because the traffic never traverses the platform proxy, **the platform cannot take part in authentication for this mode** — the platform session, the `Cookie` / `X-Csrf-Token` channel described in 8.9, and the platform permission model do **not** apply to the page served on the application port. The application itself must implement its own access control for that port (for example its own login or an explicit restriction to trusted networks); do not claim that the platform validates the session for a port-mode page.
 
 **Port Listening Rules:**
 - **Must not** occupy system reserved ports (22, 80, 443, 445, 3306, 5050, 5432, 6379, 8181, 8443) — full list: Appendix B of Chapter 20 / §12.8
 - Recommended port range: 8000-19999
+
+##### 8.3.2.2 .sock Listening Access
+
+In this mode the application service is exposed through the platform socket and the platform nginx route, and the address published in `config.ini.path` is the route form `/<app_id>/`:
+
+- **Page address:** `http://<ip>:8181/<app_id>/` — the application page is reached through the platform nginx on port 8181, which requires the nginx configuration file `nginx/<app_id>.conf` described below.
+- **API address:** application interfaces are reached through the platform function route `http://<ip>:8181/v2/proxy/<app_id>/`.
+- **`webui.bz2` is mandatory** in this mode: the frontend page archive is served by the platform.
+- **Platform authentication applies:** requests must carry the platform `Cookie` + `X-Csrf-Token` headers. This is the only compliant authentication channel; the full specification is in **8.9** (request path) and **8.10** (headers and session handling).
 
 **Nginx Configuration File Template:**
 
@@ -304,7 +328,7 @@ location /<app_id>/ {
 - The platform Nginx `include` directive loads configurations in alphabetical order; port conflicts between applications are resolved by using unique ports — two applications cannot share the same port
 - Log rotation: Nginx access/error logs are managed by the platform; do not write your own nginx logs
 - Must not include `server {}` blocks; only use `location /<app_id>/ {}` blocks
-- **Reserved `tos` prefix:** the configuration file name `<app_id>.conf` and the route prefix `location /<app_id>/` are both derived from the App ID and must not start with `tos` — the platform reserves the `tos` prefix in the nginx namespace, so a `tos`-prefixed name collides with the platform's own nginx entries and the application page cannot be opened (FB-20261017-002; see 8.4.2 and 8.11)
+- **Reserved `tos` prefix:** the configuration file name `<app_id>.conf` and the route prefix `location /<app_id>/` are both derived from the App ID and must not start with `tos` — the platform reserves the `tos` prefix in the nginx namespace, so a `tos`-prefixed name collides with the platform's own nginx entries and the application page cannot be opened (see 8.4.2 and 8.11)
 
 #### 8.3.3 No UI Service
 
@@ -370,6 +394,8 @@ No UI applications must report their running status so that the platform can det
 
 config.ini is the core metadata file, defining the application's identity, display information, runtime attributes, and dependency relationships. It is the key basis for platform validation and App Center display.
 
+> **Scope of this chapter (Deb and Docker):** the `config.ini` / `app.lang` / icon specifications in §8.4–§8.6 apply to **both** Deb and Docker applications. The field dictionary in §8.4.2 is the common field dictionary for both types; the only field with no Deb counterpart, `depend`, is Docker-only and is defined in **§9.2.1**. Docker-specific differences are described in Chapter 9.
+
 > **Important:** The file extension is `.ini`, but the content must be in **strict JSON format**. Do not add comments, use single quotes, trailing commas, or any syntax errors.
 
 > **Format Note:** The `.ini` file extension is a company historical convention (maintaining filename consistency with the legacy configuration system), but the parser processes it as JSON format. Developers must write using JSON syntax, otherwise automatic validation will fail.
@@ -377,6 +403,8 @@ config.ini is the core metadata file, defining the application's identity, displ
 #### 8.4.1 Standard Template
 
 Below is the config.ini standard template, divided into three independent examples by application subtype. Developers should choose the corresponding template based on their application type. **Choose one of the three; do not mix.**
+
+> **Dependency scope:** the three templates below are Deb templates and therefore contain no `depend` line — Deb applications declare dependencies in the `Depends` field of `DEBIAN/control` (see [Chapter 5 · ABI Compatibility](05_ABI_Compatibility.md#52-declaring-runtime-dependencies) and §8.13), **not** in `config.ini`. The `config.ini` `depend` field applies to **Docker applications only** (field definition in §9.2.1, package structure in Chapter 9).
 
 > **Must Read: Field Mutual Exclusion Relationships**
 >
@@ -408,7 +436,6 @@ Below is the config.ini standard template, divided into three independent exampl
   "beta": false,
   "low_version": "TOS7.0",
   "category": ["Utilities"],
-  "depend": [],
   "relation": [],
   "platform": "x86_64",
   "official": "https://example.com",
@@ -416,7 +443,6 @@ Below is the config.ini standard template, divided into three independent exampl
   "system_id": "dev-myapp",
   "package": "dev-myapp",
   "user": "dev-myapp",
-  "all_user_display": true,
   "allow_open_in_mobile": false
 }
 ```
@@ -437,7 +463,6 @@ Below is the config.ini standard template, divided into three independent exampl
   "beta": false,
   "low_version": "TOS7.0",
   "category": ["Utilities"],
-  "depend": [],
   "relation": [],
   "platform": "x86_64",
   "official": "https://example.com",
@@ -445,7 +470,6 @@ Below is the config.ini standard template, divided into three independent exampl
   "system_id": "dev-myapp",
   "package": "dev-myapp",
   "user": "dev-myapp",
-  "all_user_display": true,
   "allow_open_in_mobile": false
 }
 ```
@@ -464,7 +488,6 @@ Below is the config.ini standard template, divided into three independent exampl
   "beta": false,
   "low_version": "TOS7.0",
   "category": ["Utilities"],
-  "depend": [],
   "relation": [],
   "platform": "x86_64",
   "official": "https://example.com",
@@ -472,16 +495,19 @@ Below is the config.ini standard template, divided into three independent exampl
   "system_id": "dev-myapp",
   "package": "dev-myapp",
   "user": "dev-myapp",
-  "all_user_display": true,
   "allow_open_in_mobile": false
 }
 ```
 
 #### 8.4.2 Field Reference
 
+> **Field ownership:** this table is the `config.ini` field dictionary shared by both application types; a field whose Required column says "for Deb applications" or "for Docker applications" applies to that type only (`system_id` / `package` are Deb, `compose_project` is Docker). `depend` is the single Docker-only field **not** listed here — it is defined in **§9.2.1**, and Deb applications never declare it. Icon and `app.lang` specifications are in §8.6 / §8.5 and are shared by both types.
+>
+> **No `depend` for Deb:** Deb applications do not declare dependencies through `config.ini` — dependencies are declared in the `Depends` field of `DEBIAN/control` (see Chapter 5 · §5.2 and §8.13). The `depend` field exists for Docker applications only (§9.2.1).
+
 | Field | Type | Required | Description | Detailed Description |
 |---|---|---|---|---|
-| `id` | string | ✅ Yes | Application unique identifier | Globally unique on the platform; must not duplicate any listed application. Character set: lowercase letters (a-z), digits (0-9), and hyphens (-). Must start with a letter. Maximum length: 50 characters. Recommended format: developer-account-identifier-app-business-name or reversed-domain-app-name. Examples: dev-admin-monitor, com-douyin-service. Prohibited pure generic system keywords: docker, bin, var, api, usr, root, admin, system, service, etc. **Reserved prefix — must not start with `tos`:** the platform reserves the `tos` prefix in the nginx route/command namespace, so an `id` such as `tos-log-server` collides with the platform's own nginx entries and the application page cannot be opened normally (FB-20261017-002; see 8.11). Cannot be modified after creation. |
+| `id` | string | ✅ Yes | Application unique identifier | Globally unique on the platform; must not duplicate any listed application. Character set: lowercase letters (a-z), digits (0-9), and hyphens (-). Must start with a letter. Maximum length: 50 characters. Recommended format: developer-account-identifier-app-business-name or reversed-domain-app-name. Examples: dev-admin-monitor, com-douyin-service. Prohibited pure generic system keywords: docker, bin, var, api, usr, root, admin, system, service, etc. **Reserved prefix — must not start with `tos`:** the platform reserves the `tos` prefix in the nginx route/command namespace, so an `id` such as `tos-log-server` collides with the platform's own nginx entries and the application page cannot be opened normally (see 8.11). Cannot be modified after creation. |
 | `icon` | string | ✅ Yes | Icon path | Relative path within the repository. Must follow the `/images/icons/<id>.svg` format. The icon file must exist at this path. |
 | `publisher` | string | ✅ Yes | Publisher name | The developer or organization name displayed in the App Center. Example: `"Kevin"`, `"LinuxServer.io"`. |
 | `path` | string | Conditionally Required | Application access address | **The `path` field is mutually exclusive by scenario: iframe uses `/<app_id>/`; external open uses `http://${ip}:<port>`; no UI is left empty.** For Deb applications **both** forms are accepted: the full URL `http://${ip}:<port>` (e.g., `http://${ip}:8686`) and the route form `/<app_id>/`. Using the `${ip}` placeholder is recommended — the system automatically replaces it with the TNAS LAN IP. **Hardcoding a fixed IP or domain is prohibited.** Non-80/443 ports: `http://${ip}:<port>`. WebUI Internal Open (iframe): `/<app_id>/`. No UI application: set to `""` or omit this field. Required when `exec=true`. The desktop entry opens the resolved access address — for example `http://1.2.3.4/abc/`. |
@@ -492,13 +518,12 @@ Below is the config.ini standard template, divided into three independent exampl
 | `maxmin` | bool | No | Whether the window can be maximized/minimized | Only effective when `open_path=false`. Controls whether the application popup supports maximize/minimize. Default `false`. |
 | `width` | int | No | Default window width | Only effective when `open_path=false`. The width of the application page when opened, default 1180. |
 | `height` | int | No | Default window height | Only effective when `open_path=false`. The height of the application page when opened, default 680. |
-| `help` | string | ✅ Yes | Help documentation URL | Help documentation, wiki, or community tutorial link of the application. **Required:** every submission must provide the help/documentation address of the application. |
+| `help` | string | ✅ Yes | Help documentation URL | Help documentation, wiki, or community tutorial link of the application. **Required:** every submission must provide the application's help / documentation URL — it is one of the fields the platform validates for presence and non-emptiness (id / icon / publisher / exec / version / help / category / platform / application_type / user). Users rely on it to find usage documentation, so it must not be left empty. |
 | `version` | string | ✅ Yes | Application version number, displayed in the App Center | Must follow the 4.2 Version Number Specification (character rules, numeric comparability, and must be greater than the previously published version) — a specification requirement upheld at manual review: the platform's automated validation does not inspect version numbers at all (agent-api §6.5.6). A digits-and-dots value that increases with every release (e.g. `"1.0.0"`, `"2.3.1"`) also lets the App Center detect updates — see 4.2 Version Number Specification. |
 | `recommend` | bool | ✅ Yes | Whether the application is recommended | `recommend` — Recommendation flag, uniformly set by platform operations after review based on application quality. **Developers must always set this to `false` when submitting.** This field is managed by the platform; developers must not modify it to `true` on their own. |
 | `beta` | bool | ✅ Yes | Whether it is a beta version | `true` = beta version, only shown to test users; `false` = stable version, shown to all users. |
-| `low_version` | string | No | Minimum supported TOS version | Minimum supported TOS system version. Specifies the minimum TOS version on which the application can run normally. This is NOT the application's own version. **Optional (since the 20261019 revision):** leaving it empty is allowed and does not block submission — the release then declares no minimum TOS version, and the platform applies no version-based device filtering to it. When provided, use a plain numeric version in MAJOR.MINOR or MAJOR.MINOR.PATCH format (e.g. 7.0, 7.1) and it must be 7.0 or higher. |
+| `low_version` | string | No | Minimum supported TOS version | Minimum supported TOS system version. Specifies the minimum TOS version on which the application can run normally. This is NOT the application's own version. **Optional:** leaving it empty is allowed and does not block submission; when provided it must be TOS 7.0 or higher. Use a plain numeric version in MAJOR.MINOR or MAJOR.MINOR.PATCH format (e.g. 7.0, 7.1); an empty value means the application declares no minimum TOS version. |
 | `category` | []string | ✅ Yes | Application categories | Up to 3 categories, selected from the official category list (see [Appendix A](20_Appendix.md#appendix-a-application-categories)). **The first category is the primary category** — it determines the default display section of the application. Arrange from most specific to most general. Exceeding the category limit results in rejection. |
-| `depend` | []string | No | Dependency application list | Application IDs that must be installed before this application. Must be existing App Center application IDs. Dependencies are installed in list order. Example: `["DockerEngine"]`. No dependencies: `[]`. **Circular dependencies will be rejected.** |
 | `relation` | []string | No | Related application list | Application IDs displayed in the "Related Applications" module on the application details page. No mandatory dependency, display association only. No relations: `[]`. |
 | `platform` | string | ✅ Yes | Target architecture | `"x86_64"` or `"aarch64"`. Multi-architecture requires separate submissions. |
 | `official` | string | No | Official website | Link to the application's official website. Leave empty if none. |
@@ -507,7 +532,6 @@ Below is the config.ini standard template, divided into three independent exampl
 | `package` | string | Conditionally Required | Deb package name | **Required for Deb applications.** Must match the `Package` field in DEBIAN/control. Leave empty for Docker applications. |
 | `compose_project` | string | Conditionally Required | Docker Compose project name | **Required for Docker applications.** Specifies the name used when creating the docker-compose project; must conform to Docker Compose project naming conventions (only lowercase letters, digits, hyphens, and underscores). Leave empty for Deb applications. Example: `"myapp-docker"`.<br>⚠️ **Note:** Although Docker Compose allows underscores, it is recommended that `compose_project` use the same character set as `id` to reduce confusion. `id` only supports lowercase letters, digits, and hyphens (no underscores). If both use the same string, do not use underscores in `compose_project` either. |
 | `user` | string | ✅ Yes | Runtime user | The system user under which the application runs. After specification, a dedicated user is automatically created (e.g., `"jellyfin"`). Deb applications must match the systemd service `User` field. **Using the root user is strictly prohibited.** |
-| `all_user_display` | bool | No | Whether visible to all users | `true` = visible to all TNAS users; `false` = visible to administrators only. When `false`, the application only appears in the administrator's App Center view. Non-admin users cannot see or interact with the application. The application is still installed system-wide and runs for all users; this setting only controls visibility. |
 | `allow_open_in_mobile` | bool | No | Whether mobile access is supported | `true` = the application supports mobile access; `false` = the application does not support mobile access. Default `false`. |
 | `share_folders` | []string | No | Shared folders created on installation | Configures shared folders to be created for the application during installation, with folder permissions managed via ACL. **Using this field requires the `user` field to be non-empty.** Example: `["data", "config"]`. |
 
@@ -550,10 +574,10 @@ Correct:
 3. **ID Uniqueness**: `id` must be globally unique. Duplicate IDs will be rejected.
 4. **Version Incrementation**: The version number must be greater than every previously published version of the same application, as required by the 4.2 Version Number Specification. The platform's automated validation does not inspect version numbers at all (agent-api §6.5.6) — this rule is a specification requirement upheld at manual review (see 16 §16.1 / §16.2) — while the App Center detects updates by comparing version numbers numerically, so a version that is not greater than the installed one will not reach existing users as an update.
 5. **Category Limit**: Each application may have at most 3 categories.
-6. **TOS Version (`low_version`, optional)**: `low_version` is **not** a required field since the 20261019 revision — leaving it empty is allowed and does not block submission. When it is provided, it must be TOS 7.0 or higher.
+6. **TOS Version (`low_version`, optional)**: `low_version` is **optional** — leaving it empty is allowed and does not block submission; when provided, its value must be TOS 7.0 or higher, written as plain numbers in MAJOR.MINOR or MAJOR.MINOR.PATCH form (e.g. `7.0`). An empty value means the application declares no minimum TOS version requirement.
 7. **Field Consistency**: `system_id` must match the systemd service filename, and `package` must match the `Package` field in DEBIAN/control. Keep the `version` field consistent between config.ini and DEBIAN/control — see 4.2.2.
-8. **Reserved `tos` Prefix**: `id` must not start with `tos`. The platform reserves the `tos` prefix in the nginx route/command namespace — an `id` starting with `tos` (e.g. `tos-log-server`) collides with the platform's own nginx entries, and the application page cannot be opened normally. The same prohibition applies to every nginx-related name derived from the App ID: the configuration file name `nginx/<app_id>.conf`, the route prefix `location /<app_id>/`, and any nginx command named after the App ID (FB-20261017-002; see 8.4.2 and 8.11). Because `id` cannot be modified after creation, fix the name before publishing (see 19 §19.1).
-9. **Help Documentation (`help`, required)**: since the 20261019 revision, `help` is a **required** field — every submission must provide the application's help documentation, wiki, or community tutorial URL.
+8. **Reserved `tos` Prefix**: `id` must not start with `tos`. The platform reserves the `tos` prefix in the nginx route/command namespace — an `id` starting with `tos` (e.g. `tos-log-server`) collides with the platform's own nginx entries, and the application page cannot be opened normally. The same prohibition applies to every nginx-related name derived from the App ID: the configuration file name `nginx/<app_id>.conf`, the route prefix `location /<app_id>/`, and any nginx command named after the App ID (see 8.4.2 and 8.11). Because `id` cannot be modified after creation, fix the name before publishing (see 19 §19.1).
+9. **Help Documentation (`help`, required)**: `help` is a **required** field — every submission must provide the application's help documentation, wiki, or community tutorial URL, which belongs to the config.ini fields the platform validates for presence and non-emptiness (agent-api §6.5.6). Users rely on it to find usage instructions.
 
 **`path` Field Value Quick Reference Table:**
 
@@ -578,36 +602,38 @@ The language file provides multilingual display support for the App Center. The 
 
 **Write `app.lang` against the full 26-language set listed below.** Provide one section per language, using exactly these tags — they are the complete set the App Center recognises. Supersets are allowed.
 
-**Recommended: cover all 26 languages.** Coverage is **not mandatory** — if the application does not need to be displayed in a given language environment, simply omit that language; an `app.lang` containing fewer than 26 language sections is **not** rejected (review only reminds you to complete the set; see 8.5.9 and 16 §16.1 / §16.2).
+**Required coverage:** an application released for TOS 7.0 must cover the first 14 languages; an application released for TOS 7.1 and later must cover all 26. **Shortfall is not a rejection ground:** an `app.lang` with fewer sections than the required set is **not** rejected — review only reminds the developer to complete the set (see 8.5.9 and 16 §16.1 / §16.2). Bear in mind that a language you omit hides the application from that language environment in the App Center until it is installed.
 
-| Tag | Language |
-|---|---|
-| `zh-cn` | Simplified Chinese |
-| `zh-hk` | Traditional Chinese |
-| `en-us` | English |
-| `ko-kr` | Korean |
-| `ja-jp` | Japanese |
-| `de-de` | German |
-| `fr-fr` | French |
-| `it-it` | Italian |
-| `es-es` | Spanish |
-| `hu-hu` | Hungarian |
-| `pl-pl` | Polish |
-| `tr-tr` | Turkish |
-| `ru-ru` | Russian |
-| `pt-pt` | Portuguese |
-| `cs-cz` | Czech |
-| `da-dk` | Danish |
-| `nl-nl` | Dutch |
-| `nb-no` | Norwegian |
-| `sv-se` | Swedish |
-| `el-gr` | Greek |
-| `ro-ro` | Romanian |
-| `th-th` | Thai |
-| `vi-vn` | Vietnamese |
-| `id-id` | Indonesian |
-| `ar-sa` | Arabic |
-| `he-il` | Hebrew |
+> **Version scope:** TOS 7.0 supports **14 system languages** — the first 14 rows of the table below (`zh-cn` … `pt-pt`) — and an application released for TOS 7.0 is required to adapt those 14. **From TOS 7.1 the required set is 26 languages**, i.e. the complete table below. The tags and their order in this table are authoritative: use exactly these tags, one section per language.
+
+| # | Tag | Language | Required from |
+|---|---|---|---|
+| 1 | `zh-cn` | Simplified Chinese | TOS 7.0 |
+| 2 | `zh-hk` | Traditional Chinese | TOS 7.0 |
+| 3 | `en-us` | English | TOS 7.0 |
+| 4 | `ko-kr` | Korean | TOS 7.0 |
+| 5 | `ja-jp` | Japanese | TOS 7.0 |
+| 6 | `de-de` | German | TOS 7.0 |
+| 7 | `fr-fr` | French | TOS 7.0 |
+| 8 | `it-it` | Italian | TOS 7.0 |
+| 9 | `es-es` | Spanish | TOS 7.0 |
+| 10 | `hu-hu` | Hungarian | TOS 7.0 |
+| 11 | `pl-pl` | Polish | TOS 7.0 |
+| 12 | `tr-tr` | Turkish | TOS 7.0 |
+| 13 | `ru-ru` | Russian | TOS 7.0 |
+| 14 | `pt-pt` | Portuguese | TOS 7.0 |
+| 15 | `cs-cz` | Czech | TOS 7.1 |
+| 16 | `da-dk` | Danish | TOS 7.1 |
+| 17 | `nl-nl` | Dutch | TOS 7.1 |
+| 18 | `nb-no` | Norwegian | TOS 7.1 |
+| 19 | `sv-se` | Swedish | TOS 7.1 |
+| 20 | `el-gr` | Greek | TOS 7.1 |
+| 21 | `ro-ro` | Romanian | TOS 7.1 |
+| 22 | `th-th` | Thai | TOS 7.1 |
+| 23 | `vi-vn` | Vietnamese | TOS 7.1 |
+| 24 | `id-id` | Indonesian | TOS 7.1 |
+| 25 | `ar-sa` | Arabic | TOS 7.1 |
+| 26 | `he-il` | Hebrew | TOS 7.1 |
 
 **Must:** in every language section you include, `name` / `auth` / `descript` must not be empty; `release_note` / `important` may be empty. An untranslated language may be filled with the English text — a blank or punctuation-only value is not accepted.
 
@@ -643,9 +669,11 @@ important = "用户需要注意的重要事项。"
 | `release_note` | No | Version update content. Use `</br>` for line breaks between multiple items. May be left empty for the first release. |
 | `important` | No | Important notices (such as permission requirements, port conflicts, configuration steps, etc.). |
 
+> **Non-empty rule (applies to every language section that is included):** `name` / `auth` / `descript` **must not be empty** — blank, whitespace-only or punctuation-only values are not accepted. `release_note` / `important` **may be empty**. The required fields need **not** all be translated: an untranslated language must be filled with the **English** content rather than left blank. Supersets are allowed — submitting more than the 26 languages listed in 8.5.1 is accepted.
+
 #### 8.5.4 Rules
 
-1. Write `app.lang` against the full 26-language set defined in 8.5.1; supersets are allowed. Coverage is **not mandatory**: an application that does not need to be displayed in a given language environment may simply omit that language. For every language section that is included, untranslated entries must be filled with English content — **leaving an included section's values blank is prohibited**. An `app.lang` with fewer than 26 language sections is not rejected; review only reminds the developer to complete the 26-language set (see 8.5.9).
+1. Write `app.lang` against the full 26-language set defined in 8.5.1; supersets are allowed. Required coverage follows the version scope in 8.5.1 (TOS 7.0: the first 14; TOS 7.1 and later: all 26), while **a shortfall is not a rejection ground** — it only costs reach in the omitted language environments (see 8.5.9). For every language section that is included, untranslated entries must be filled with English content — **leaving an included section's values blank is prohibited**. An `app.lang` with fewer than 26 language sections is not rejected; review only reminds the developer to complete the 26-language set (see 8.5.9).
 2. File encoding must be **UTF-8 without BOM**.
 3. The `descript` field semantics must be consistent across all languages.
 4. If the application name is a universal language name (not translated), the same value may be used for `name` across all languages. If the application name itself is a proper noun (such as a brand name or product name), the same name may be used across all languages without transliteration or translation.
@@ -657,9 +685,11 @@ important = "用户需要注意的重要事项。"
 - Line endings must be **LF** (Unix style, `\n`). CRLF (Windows style, `\r\n`) will cause parsing errors
 - File naming convention: `<appid>.lang` (e.g., `aria2.lang`)
 
-#### 8.5.6 Text Length
+#### 8.5.6 Field Content per Language
 
-The platform no longer sets a character limit on `name` / `auth` / `descript` / `release_note` / `important`. Text length is determined by how each language renders on the client; the UI truncates the display as needed.
+Each language section carries its own values for `name` / `auth` / `descript` / `release_note` / `important`, written to fit the language concerned rather than a fixed template. Field definitions and required/optional status are listed in 8.5.3; `release_note` formatting rules are in 8.5.7.
+
+In every section that is included, `name` / `auth` / `descript` must be non-empty; `release_note` / `important` may be empty. Entries that have not been translated are written with the English content — a blank value is never acceptable, and the section must not be omitted for that reason alone (omitting a language only affects display coverage, see 8.5.9).
 
 #### 8.5.7 release_note Format
 
@@ -692,9 +722,14 @@ Whether an application is visible under a given system language depends on **whe
 - **Not-installed applications:** there is **no fallback**. An application whose `app.lang` does not contain the current system language is not displayed in that language environment at all, so the English fallback cannot take effect.
 - This is exactly why completing the 26-language set matters: the more languages `app.lang` covers, the more language environments the application can be discovered and installed from.
 
-**3) Review treatment**
+**3) Validation and review treatment**
 
-An `app.lang` covering fewer than 26 languages is **not** a rejection reason: review does not block the submission and only reminds the developer to complete the 26-language set (see 16 §16.1 / §16.2).
+The rules applied to `app.lang` — by the self-test tool and by review — are:
+
+1. **Section-level non-empty check:** in every language section included, `name` / `auth` / `descript` must be non-empty; `release_note` / `important` may be empty.
+2. **Untranslated content:** a language that has not been translated must carry the **English** text in those three fields. Blank, whitespace-only or punctuation-only values are not accepted for any section that is present.
+3. **Superset allowed:** additional languages beyond the 26 in 8.5.1 are accepted.
+4. **Coverage shortfall is not a blocking item:** the required set follows the version scope in 8.5.1 — the first 14 languages for a TOS 7.0 application, all 26 from TOS 7.1 on. An `app.lang` that covers fewer sections than its required set is **not** a rejection reason: review does not block the submission and only reminds the developer to complete the set (see 16 §16.1 / §16.2). The version requirement and the non-blocking reminder therefore coexist: coverage completeness is a recommendation, while the non-empty rule for every included section is mandatory.
 
 **4) Historical background and upgrade advice**
 
@@ -704,7 +739,7 @@ An `app.lang` covering fewer than 26 languages is **not** a rejection reason: re
 
 1. **Add, do not rewrite.** Leave the 14 existing sections exactly as they are — same values, same order — and only append the remaining 12 sections using the tags listed in 8.5.1 (`cs-cz` … `he-il`).
 2. **Fill untranslated sections with English.** A newly added language you have not translated yet still needs non-empty `name` / `auth` / `descript`; put the English text in. Blank, punctuation-only, or missing values are not accepted (see 8.5.3).
-3. **The order is yours to choose.** There is no required sequence — prioritise the languages your users are most likely to use, and adding only part of the 12 is already useful (it is not a submission blocker). Keep the semantics of `descript` consistent across every language you provide (see 8.5.8).
+3. **Append in the 8.5.1 order.** Add the 12 new sections in the order listed in 8.5.1 (row 15 `cs-cz` … row 26 `he-il`) — the order in the file is not itself validated, but keeping it aligned with the specification makes review and later upgrades easier. Adding only part of the 12 is already useful (it is not a submission blocker). Keep the semantics of `descript` consistent across every language you provide (see 8.5.8).
 4. **What an incomplete set actually costs you — reach, nothing else.** In a system language that `app.lang` does not contain, an application that is not yet installed is **not displayed** in the App Center, even if it has been published (no English fallback applies in this case); applications **already installed** stay visible and fall back to English. Review does **not** reject a submission for covering fewer than 26 languages — it only reminds you to complete the set (behavior details in points 1–3 above).
 
 ---
@@ -839,7 +874,9 @@ It must be compressed into `webui.bz2` for packaging, with the installation path
 <script src="./app.js?v=<version>"></script>
 ```
 
-### 8.9 Frontend-Backend Request Specification (WebUI Internal Open)
+### 8.9 Frontend-Backend Request Specification
+
+> **Applicability:** this section applies to **WebUI Internal Open** (§8.3.1) and to the **WebUI External Open `.sock` access mode** (§8.3.2.2). It does **not** apply to the port listening mode (§8.3.2.1), whose traffic does not pass through the platform proxy — see the note on port mode below.
 
 When the frontend accesses the backend, it **must not directly access the socket file**. Requests must go through the platform HTTP proxy path:
 
@@ -873,9 +910,30 @@ The backend is recommended to be compatible with the following routes to avoid p
 <config.ini.path>/<app_id>
 ```
 
-### 8.10 Frontend Authentication Header Specification (WebUI Internal Open)
+**Authentication channel — one compliant form only:** every request to `/v2/proxy/<app_id>/...` must carry **both** the `Cookie` header and the `X-Csrf-Token` header, in the exact form defined in **8.10**. This is the only accepted authentication channel:
+
+- `Cookie` and `X-Csrf-Token` are **both mandatory** — if either one is missing, the request is treated as **not authenticated** and must be rejected (HTTP `401`).
+- A request that carries only the standard browser `Cookie` (without the `X-Csrf-Token` header) is **not** compliant and is not accepted; it must not be treated as a second, interchangeable option.
+- There is no alternative channel and the two are not "either/or": do not document, implement or accept a Cookie-only path, and do not fall back to it when the `X-Csrf-Token` header is absent.
+
+**Port mode is not covered:** a page served directly on the application port (§8.3.2.1) does not pass through the platform proxy, so neither this channel nor the platform permission model applies to it — the application must implement its own access control on that port.
+
+**Authenticated but not authorized vs. not authenticated:** the two failure situations must be distinguished, because they lead to different user-facing behavior:
+
+| Situation | Backend response | Frontend behavior |
+|---|---|---|
+| Not logged in, session expired or token invalid | `401 Unauthorized` | Send the user to the **TOS login page** to log in and authorize again (see 8.10) |
+| Logged in, but the current TOS user has no permission for this application | `403 Forbidden` with a no-permission result | Show a **"no permission"** message; do **not** render the application content and do not issue further application API calls |
+
+> **Permission model:** only administrators can open an application page by default; an administrator may grant a non-administrator user access. A non-administrator user has **no App Center module permission** — after authorization the entry point is the application icon on the desktop. The frontend must not assume that any logged-in user is allowed to use the application, and must never treat "logged in" as "authorized" (see §8.3.2).
+
+### 8.10 Frontend Authentication Header Specification
+
+> **Applicability:** this section applies to **WebUI Internal Open** (§8.3.1) and to the **WebUI External Open `.sock` access mode** (§8.3.2.2). It does **not** apply to the port listening mode (§8.3.2.1): that traffic does not pass through the platform proxy, so the platform does not authenticate it and the headers described here are not validated by the platform.
 
 When the frontend sends backend requests, it must read the current website cookies.
+
+> **Single compliant channel:** authentication must follow the TerraMaster specification strictly — the request headers must carry **`Cookie` and `X-Csrf-Token` together**. This is the **only** accepted form: both headers are required, and a request missing either one is treated as **unauthenticated** (`401`). A standard browser `Cookie` alone is **not** a compliant authentication and is not accepted; there is no second, alternative channel, and the two must never be presented as interchangeable "options".
 
 **Cookies that must be read:**
 
@@ -939,7 +997,8 @@ Cookie
 **Backend Authentication Validation Example (Python):**
 ```python
 def validate_auth(headers):
-    '''Validate the Cookie authentication header from frontend requests.'''
+    '''Validate the platform authentication headers from frontend requests:
+    both Cookie and X-Csrf-Token are mandatory — a missing one means 401.'''
     cookie_str = headers.get('Cookie', '')
     csrf_token = headers.get('X-Csrf-Token', '')
     
@@ -983,23 +1042,33 @@ func validateAuth(r *http.Request) bool {
 
 **Token Expiry and Session Invalidation Handling:**
 - When the authentication token expires or the session becomes invalid, the backend must return HTTP `401 Unauthorized`
-- The frontend must detect the 401 response and redirect to the TOS login page
-- Do not attempt to auto-refresh the token; redirect to `/` to trigger TOS re-authentication
+- The frontend must detect the `401` response and send the user to the **TOS login page**, where the user logs in and authorizes again; the application page must not continue to render or issue further requests during that state
+- Do not attempt to auto-refresh the token or to keep the session alive locally
+- How the user returns to the application after logging in is decided by the platform: do not construct your own `redirect` parameter or assume a particular callback URL — rely on the platform behavior after a successful login
 
 ```javascript
 fetch('/v2/proxy/myapp/api', { credentials: 'include' })
   .then(res => {
     if (res.status === 401) {
-      window.location.href = '/';  // Redirect to TOS login
+      // Not logged in / session expired: go to the TOS login page and log in again.
+      // The return path after login is handled by the platform — do not append a redirect parameter.
+      window.location.href = TOS_LOGIN_PAGE;
+    }
+    if (res.status === 403) {
+      // Logged in but not authorized for this application: show "no permission",
+      // do not render the application and do not issue further API calls.
+      showNoPermission();
     }
     return res.json();
   });
 ```
 
+**Permission failures are not login failures:** a `403` means the TOS user is authenticated but has no permission for the application (for example a non-administrator user who has not been authorized by an administrator). In that case the frontend must show a "no permission" message and must **not** render the application content; it must not fall back to the login page, and it must not retry with other credentials.
+
 ---
 ### 8.11 Nginx Configuration Specification (WebUI External Open)
 
-An nginx configuration directory must be created at the same level as `config.ini`:
+In the **`.sock` access mode (§8.3.2.2)** an nginx configuration directory must be created at the same level as `config.ini` — this file is what exposes the application through the platform route. A **port-mode** application (§8.3.2.1) serves its own page and ships no nginx file:
 
 ```text
 /usr/local/<app_id>/nginx/<app_id>.conf
@@ -1020,7 +1089,7 @@ location /<app_id>/ {
 
 > **`proxy_pass` in the portal block is an optional improvement:** the portal block `location /<app_id>/` may contain only `proxy_http_version` and the `proxy_set_header` directives when the application ships its own frontend Web panel and its service is reachable through the application socket `/var/api/<app_id>.sock` (proxied by the sibling block `location ^~ /v2/proxy/<app_id>/`). In that form the portal block does not forward traffic itself, and a missing `proxy_pass` is **not** a defect and must not block review. Adding `proxy_pass http://127.0.0.1:<listen_port>/;` to the portal block is an **optional improvement**, not a review requirement, and must never be used as a ground for rejection; it is recorded as an advisory item in **12 §12.10 Optional Improvements (Advisory)**. Full judgment logic: see 8.3.2; review checklist: see 16.2.
 
-> **Reserved `tos` prefix (mandatory):** the App ID and every nginx-related name derived from it — the configuration file name `nginx/<app_id>.conf`, the route prefix `location /<app_id>/`, and any nginx command or entry named after the App ID — must **not** start with `tos`. `tos` is reserved by the platform in the nginx namespace: per platform engineering confirmation (2026-10-17, issue `TOS-ISSUE-NGINX-PREFIX-COLLISION`), an nginx command starting with `tos` collides with the platform's own nginx entries and the application cannot be opened normally. Fix the name **before** publishing — choose an App ID that does not start with `tos` and rename the corresponding nginx configuration file and route prefix; the App ID cannot be modified after creation (FB-20261017-002; see 8.4.2 and 19 §19.1).
+> **Reserved `tos` prefix (mandatory):** the App ID and every nginx-related name derived from it — the configuration file name `nginx/<app_id>.conf`, the route prefix `location /<app_id>/`, and any nginx command or entry named after the App ID — must **not** start with `tos`. `tos` is reserved by the platform in the nginx namespace: per platform engineering confirmation, an nginx command starting with `tos` collides with the platform's own nginx entries and the application cannot be opened normally. Fix the name **before** publishing — choose an App ID that does not start with `tos` and rename the corresponding nginx configuration file and route prefix; the App ID cannot be modified after creation (see 8.4.2 and 19 §19.1).
 
 **Example (weather application, port 16688):**
 
@@ -1192,7 +1261,7 @@ Description: Application data package - <App Name>
 |---|---|---|---|
 | `Package` | `<appid>` | `<package>` | Data package name recommended to match config.ini.id |
 | `Version` | `<version>` | `<version>` | Recommended to keep identical (the platform does not validate the two packages' versions) |
-| `Architecture` | `all` | `amd64`/`arm64` | Data package is usually `all`; source package is the actual architecture |
+| `Architecture` | `all` | `amd64`/`arm64` | The data package should be `all` (configuration files are architecture-independent); the source package carries the actual architecture. The two packages are associated automatically by the APT repository mechanism, and neither the platform nor the self-test tool validates this value — still follow the specification and write `all` |
 
 **config.ini Field Associations:**
 
@@ -1738,8 +1807,8 @@ exit 0
 |---|---|---|
 | **Installation Order** | The source package (`<package>.deb`) must be installed first, followed by the data package (`<appid>.deb`). The data package depends on the source package. | Installation failure |
 | **Version Display** | The platform does **not** require the two packages to carry the same `Version`, and does not compare them. The version shown in the App Center comes from the `version` field in `config.ini` — keep that field accurate. | — |
-| **No Binaries in Data Package** | The data package (`<appid>.deb`) **must not contain any executable binary files**, compiled code, or system-specific libraries. Only configuration files, icons, language files, nginx configurations, and other static resources are allowed. | Intercepted at the automatic validation stage before submission, without entering manual review. |
-| **Data Package Architecture** | The data package `Architecture` must be `all`, and must not be `amd64` or `arm64`. Configuration files are architecture-independent. | Automatic rejection |
+| **No Binaries in Data Package** | The data package (`<appid>.deb`) **must not contain any executable binary files**, compiled code, or system-specific libraries. Only configuration files, icons, language files, nginx configurations, and other static resources are allowed. | Rejected at manual review — executable content is not one of the automatic checks (see 16 §16.1). |
+| **Data Package Architecture** | The data package `Architecture` should be `all`, not `amd64` or `arm64` — configuration files are architecture-independent. The two packages are associated automatically by the APT repository mechanism, and neither the platform nor the self-test tool validates this value, so a deviation is not a ground for rejection; the specification nonetheless requires `all`. | Not validated — follow the specification (`all`) |
 | **Source Package Independence** | The deb source package must be independently installable on the TOS 7.0 system using the `dpkg -i` command. | Installation failure |
 | **Dependency Declaration** | The data package's `Depends` field must include the source package name, and specifying the version is recommended. | Rejection |
 | **Systemd Service File Ownership** | The systemd service file (`.service`) must be in the source package; the data package must not contain it. The data package is only responsible for TOS platform configuration and display. | Rejection |

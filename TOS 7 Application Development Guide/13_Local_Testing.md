@@ -250,7 +250,8 @@ docker logs -f <appid> &     # Docker
 | Nginx reload failure | Invalid Nginx config syntax | Validate with `nginx -t` before reloading |
 | Incorrect Docker volume permissions | Host vs container UID/GID mismatch | Use `PUID`/`PGID` environment variables matching the host user; if the image does not support `PUID`/`PGID` (some images hard-code their runtime user), set the compose `user` field to that image's own UID:GID instead (see 10.3.1) |
 | Service starts before network is ready | systemd unit missing `After=network.target` | Add `After=network.target` and `Wants=network.target` |
-| Deb fails to install due to unmet dependencies | Missing Depends in DEBIAN/control | Missing system library dependency → add corresponding package name in `Depends` (DEBIAN/control); missing other app dependency → add in config.ini `depend` field |
+| Deb fails to install due to unmet dependencies | Missing Depends in DEBIAN/control | Missing system library dependency → add corresponding package name in `Depends` (DEBIAN/control); missing other application dependency → complete the dependency in the metadata (`Depends` field of `DEBIAN/control`) |
+| Docker app installs but the container runtime is unavailable | `DockerEngine` not declared in the `config.ini` `depend` field | Add `DockerEngine` to `depend` in `config.ini`; if the app also depends on another App Center application, add that App ID to the same list (installed in list order, no circular dependencies) |
 
 ---
 

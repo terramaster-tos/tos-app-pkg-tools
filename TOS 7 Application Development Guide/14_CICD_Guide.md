@@ -64,7 +64,7 @@ jobs:
           dpkg-deb -I ./*.deb
           lintian ./*.deb || true
 
-      - name: Generate checksums
+      - name: Generate checksums (optional; the platform generates the value at submission)
         run: |
           sha256sum ./*.deb > ./*.deb.sha256
 
@@ -177,10 +177,9 @@ jobs:
           python3 -c "
           import json
           config = json.load(open('config.ini'))
-          # low_version is optional; help is a required field (20261019 revision)
+          # low_version is optional; help is a required field
           required = ['id', 'icon', 'publisher', 'exec', 'version', 'help',
                       'category', 'platform', 'application_type', 'user']
-          # 必填字段以用户确认清单为准
           for field in required:
               assert field in config, f'Missing required field: {field}'
           

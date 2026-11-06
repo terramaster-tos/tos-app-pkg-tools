@@ -57,14 +57,16 @@
    > - **Do not mix packaging formats for the same application ID in a single Release** (e.g., both a `.deb` and a `.tar.gz`). The platform tells single-package Deb (`.deb`) apart from dual-package Deb / Docker (`.tar.gz`) by the file extension, so a Release should contain a single format.
    > - **You are responsible for selecting the correct package.** Submitting the wrong package will cause the version to fail review.
 
-4. **Include SHA-256 checksum files**
+4. **SHA-256 checksum files (recommended, not required)**
 
-   For every package asset uploaded, generate and attach a corresponding `.sha256` checksum file:
+   A `.sha256` attachment is **not** a mandatory part of a Release. Providing one is recommended as a convenience for users who download the package manually:
    ```bash
    sha256sum <package_file> > <package_file>.sha256
    ```
 
    Example: `myapp_x86_64.deb` → `myapp_x86_64.deb.sha256`
+
+   The platform generates the `.sha256` value of the package itself when the version is submitted, and marks that package with it; review time integrity checks always use that platform-generated value as the baseline. A missing `.sha256` attachment never blocks submission.
 
 #### Step 4: Create an Application on the Developer Platform
 
@@ -97,17 +99,17 @@
 
 After submission, the platform automatically performs the following checks:
 - File format validation (config.ini JSON syntax, app.lang format)
-- Field completeness validation (no missing required fields)
+- Required package files present (config.ini, `<appid>.lang`, icon)
+- Field completeness validation (the platform-validated config.ini fields: id / icon / publisher / exec / version / help / category / platform / application_type / user must all exist and be non-empty — `help` **is** required, while `low_version` is optional and may be left empty)
 - Language coverage check (documentation baseline: the 26-language set defined in 8.5.1; supersets allowed). Missing sections among the first 14 entries of that set (zh-cn … pt-pt) are still caught by the API (`invalid_language_files`); the remaining 12 and any coverage below 26 are **not** blocking — review only reminds the developer to complete the 26-language set
-- Icon validation (SVG format, path matching)
-- Checksum verification (SHA-256 matches uploaded files)
+- Icon validation (SVG format present at the fixed path, icon size within the platform threshold)
+- Checksum baseline (the platform does **not** check a developer-supplied `.sha256` file; it generates the value from the package at submission and records it for later integrity verification — a missing `.sha256` attachment is not a failure)
 - Package type validation (the selected package's format matches the declared Deb / Docker application type)
 
 **Common causes of automated validation failure:**
 - config.ini contains comments or syntax errors
 - app.lang is missing language nodes
 - Icon not found or incorrect format
-- Checksum mismatch
 - The selected package does not match the declared application type or architecture
 
 #### Step 7: Manual Review
@@ -146,7 +148,7 @@ After passing the review, the application will be listed on the TOS App Center w
 - Package files must be uploaded as **Release assets**, not to the repository root.
 - Repository resources must remain available long-term. Published resources cannot be deleted.
 - The repository structure must conform to the specified directory layout.
-- All binary artifacts must be accompanied by SHA-256 checksum files.
+- SHA-256 checksum files are **recommended but not required** for Release assets; the platform generates the checksum when the version is submitted
 
 **Application Renaming and ID Change Policy:**
 - The application `id` (in config.ini) **cannot be changed** once published

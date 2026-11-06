@@ -31,7 +31,7 @@ The Docker application is submitted as a `.tar.gz` archive. The archive must con
 | File | Required | Description |
 |------|----------|-------------|
 | `config.ini` | ✅ Yes | Application metadata configuration |
-| `<appid>.lang` | ✅ Yes | Multilingual file — the documented baseline is the 26-language set defined in 8.5.1 (supersets allowed, and a language may be omitted when the application does not need to be displayed in that language environment) |
+| `<appid>.lang` | ✅ Yes | Multilingual file — the documented baseline is the 26-language set defined in 8.5.1 (supersets allowed; fewer than 26 languages is only a reminder and never a rejection reason). In every language section included, `name` / `auth` / `descript` must be non-empty; untranslated content is filled with English (see 8.5.3) |
 | `<appid>.svg` | ✅ Yes | Application icon (SVG format) |
 | `docker-compose.yml` | ✅ Yes | Container orchestration configuration |
 
@@ -42,6 +42,45 @@ The Docker application is submitted as a `.tar.gz` archive. The archive must con
 > - For Docker applications without a UI, the `x-app-meta` section is not required.
 
 
+
+#### 9.2.1 Docker-specific `config.ini` Fields
+
+**Field ownership:** `config.ini`, `app.lang` and the icon file follow the complete specifications in Chapter 8 — §8.4 (fields), §8.5 (`app.lang`) and §8.6 (icon) — and apply to Docker applications in exactly the same way. This section documents only what differs for Docker applications; do not treat §8.4.2 as a Deb-only list of fields to be redefined here.
+
+**1) `depend` — required for Docker applications**
+
+| Field | Type | Required | Description | Detailed Description |
+|---|---|---|---|---|
+| `depend` | []string | ✅ Yes | Dependency application list | Must contain `DockerEngine`. Additional App IDs of other App Center applications that this application depends on may be appended. Dependencies are resolved by App ID and installed in list order; circular dependencies are prohibited. Example: `["DockerEngine", "<app_id>"]`. |
+
+**Rules:**
+- `depend` **must contain `DockerEngine`** — a Docker application cannot run without the container runtime, and the platform uses this list to install and start it first.
+- Additional elements are **App IDs** of other applications published in the same App Center; do not put image names, container names or free-text descriptions in the list.
+- Dependencies are installed **in list order**; a circular dependency between applications is prohibited and will be rejected.
+- If a declared dependency cannot be installed, the installation of this application is aborted with an explicit error rather than started in a degraded state.
+- **Deb applications never use this field** — they declare dependencies in the `Depends` field of `DEBIAN/control` (Chapter 5 · §5.2, §8.13). `depend` exists for Docker applications only.
+
+**2) Common fields shared with §8.4.2:** `id`, `icon`, `publisher`, `exec`, `version`, `help`, `category`, `platform`, `application_type`, `user` are required for Docker as well, while `low_version` stays optional; all of them keep the meaning, type and required status defined in §8.4.2; for a Docker application `application_type` must be `"docker"`. In addition, `compose_project` is **required** for a Docker application and must be left empty for a Deb application (§8.4.2). UI-related fields follow §9.3 (`x-app-meta`) instead of the Deb `path` / `open_path` / `type` fields.
+
+**3) Minimal example:**
+
+```json
+{
+  "id": "<appid>",
+  "icon": "/images/icons/<appid>.svg",
+  "publisher": "publisher name",
+  "exec": true,
+  "version": "<app_version>",
+  "low_version": "<low_version>",
+  "category": ["Utilities"],
+  "platform": "x86_64",
+  "user": "<app_user>",
+  "application_type": "docker",
+  "depend": ["DockerEngine"]
+}
+```
+
+> The icon path, id and version values must match the archive contents described in §9.2.
 
 ### 9.3 docker-compose.yml Specification
 
@@ -169,6 +208,8 @@ x-app-meta:
 - Port: 8080
 - Dependency: DockerEngine
 
+> **Dependency rule:** a Docker application **must** declare `DockerEngine` in the `config.ini` `depend` field. If it also depends on another App Center application, add that application's App ID to the same list. Dependencies are installed in list order; circular dependencies are rejected. For the full field definition see **§9.2.1** (Docker-specific `config.ini` fields) and the common fields in §8.4.2.
+
 #### config.ini
 
 ```json
@@ -190,7 +231,6 @@ x-app-meta:
   "official": "https://example.com",
   "application_type": "docker",
   "compose_project": "myapp-docker",
-  "all_user_display": true,
   "allow_open_in_mobile": false
 }
 ```

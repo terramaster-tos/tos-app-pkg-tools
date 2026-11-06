@@ -224,7 +224,7 @@ esac
 
 > **Note:** Node.js versions are for reference within Docker containers only. Deb applications must not directly depend on them.
 
-> **Important:** The `low_version` field in config.ini is **optional**. It declares the minimum TOS version requirement of the application; when it is provided, the platform automatically filters out incompatible devices. Leaving it empty is allowed and does not block submission — the release then declares no minimum TOS version and no version-based device filtering is applied to it. Since the 20261019 revision, `help` is a required config.ini field instead.
+> **Important:** The `low_version` field in config.ini is **optional**. It declares the minimum TOS version requirement of the application — when it is provided, the platform automatically filters out incompatible devices; leaving it empty is allowed and does not block submission, and the release then declares no minimum TOS version. `help` is different: it is a **required** field — every submission must provide the application's help / documentation URL.
 
 > **TOS 7.x Minor Version Compatibility:** The TOS 7.x minor version series (including 7.1 and above) will maintain ABI/API compatibility for core dependencies (glibc/Python3/Docker/Node.js), compatible with the Ubuntu 22.04-compatible root filesystem. Applications developed for TOS 7.0 will run without additional adaptation.
 
@@ -241,7 +241,7 @@ TOS employs a root filesystem compatible with Ubuntu Linux, and the filesystem i
 | Filenames | Strictly match case. `config.ini` ≠ `Config.ini` ≠ `CONFIG.INI` |
 | Directory names | Strictly match case. `/images/icons/` ≠ `/Images/Icons/` |
 | config.ini key names | All key names must be lowercase. `"version"` correct, `"Version"` incorrect |
-| Application ID (`id`) | Strictly match case. `MyApp` ≠ `myapp`. Must not start with the reserved `tos` prefix (see 08 §8.4.2 / §8.11, FB-20261017-002). Cannot be modified after creation |
+| Application ID (`id`) | Strictly match case. `MyApp` ≠ `myapp`. Must not start with the reserved `tos` prefix (see 08 §8.4.2 / §8.11). Cannot be modified after creation |
 | Systemd service name | Must strictly match, case-sensitive |
 
 
@@ -303,7 +303,7 @@ An application's footprint is divided into three categories that are treated dif
 
 | Category | Location | Examples | Uninstall Behavior |
 |---|---|---|---|
-| **Static install files** | `/usr/local/<appid>/` (physical location: `/Volume<N>/@apps/<appid>/`) | config.ini, bin/, init.d/, nginx/, webui.bz2 | Managed by App Center/package lifecycle |
+| **Static install files** | `/usr/local/<appid>/` (physical location: `/Volume<N>/@apps/<appid>/`) | config.ini, bin/, init.d/, webui.bz2, nginx/ (`.sock` mode only, §8.3.2.2) | Managed by App Center/package lifecycle |
 | **Application runtime data** | `/usr/local/<appid>/data`, `/usr/local/<appid>/logs` | State, caches, logs, temporary data | Preserve required state across upgrade; remove only under an explicit cleanup policy |
 | **User business data (Deb applications)** | `/Volume<N>/<appid>/` (shared folder created via `ter_share_add`) | documents, media, databases | **Never auto-deleted**; retained across upgrades and uninstall |
 | **User business data (Docker applications)** | `/Volume<N>/DockerAppData/<appid>/` (volume mounts) | databases, media, documents | Retained unless the user chooses to delete data on uninstall |

@@ -13,8 +13,8 @@ Follow a consistent directory layout to ensure maintainability and compatibility
 ├── config.ini        # Application configuration file
 ├── <appid>.lang      # Language file
 ├── images/           # Icon resources
-├── webui.bz2         # Front-end page archive (WebUI applications)
-├── nginx/            # Nginx configuration (externally opened applications)
+├── webui.bz2         # Front-end page archive (WebUI applications; mandatory in the .sock mode of 8.3.2.2)
+├── nginx/            # Nginx configuration (.sock-mode external-open applications, 8.3.2.2)
 ├── init.d/           # Systemd service files
 ├── data/             # Runtime data (caches, temporary files, writable)
 └── logs/             # Application logs
@@ -268,6 +268,8 @@ services:
 3. Check commonly used ports to avoid conflicts before selection; make ports configurable via environment variables
 4. Document port usage in README.md
 
+**Access mode and ports (see 8.3.2):** an application that serves its WebUI over its **own port** (port listening, 8.3.2.1) must allocate that port from the ranges below, and the platform cannot authenticate the page. An application opened through the **`.sock` mode** (8.3.2.2) is reached on the platform's `8181` nginx route (`/<app_id>/` and `/v2/proxy/<app_id>/`) and must ship the nginx configuration and `webui.bz2`; its internal listening port is still allocated from the recommended range and must match the port configured in the nginx file. Port `8181` is reserved for TOS nginx and must never be claimed by an application.
+
 **Port Range Description:**
 - **8000-19999**: The recommended port range for TOS 7 applications, avoiding system core service ports (such as 22/80/443/8181), with ample capacity to meet the port needs of the vast majority of applications
 - **49152-65535**: IANA-defined dynamic/private port range, suitable for temporary or backup scenarios
@@ -325,8 +327,8 @@ The following tree separates the TNAS application contract from optional impleme
 ├── bin/                             # Static executables
 ├── init.d/                          # Static service unit source
 ├── images/                          # Static icons
-├── nginx/                           # Static proxy configuration (external-open only)
-├── webui.bz2                        # Static frontend archive (WebUI only)
+├── nginx/                           # Static proxy configuration (.sock-mode external-open only, 8.3.2.2)
+├── webui.bz2                        # Static frontend archive (WebUI only; mandatory in .sock mode)
 ├── data/                            # Writable runtime data, cache, and state
 └── logs/                            # Writable application log files
 
@@ -454,17 +456,17 @@ Before submission, verify:
 - [ ] Shared folders (`/Volume<N>/<appid>/`, Deb applications) are **never** deleted by scripts; cleanup code checks whether a path is a symlink (e.g., `data/` linked per Section 12.2) before recursive delete
 - [ ] Docker persistent data is mounted through volume mounts (the platform resolves them to `/Volume<N>/DockerAppData/<appid>/`); Docker Engine internal paths are not hardcoded, and the package declares no shared folder
 - [ ] README declares paths, creators, permissions, retention, ports, and shared folders
-- [ ] The App ID does not start with the reserved `tos` prefix, and neither do the nginx names derived from it (`nginx/<appid>.conf` and the route prefix `location /<appid>/`) — a `tos`-prefixed name collides with the platform's own nginx entries and the application cannot be opened (FB-20261017-002; Section 8.4.2 / 8.11)
+- [ ] The App ID does not start with the reserved `tos` prefix, and neither do the nginx names derived from it (`nginx/<appid>.conf` and the route prefix `location /<appid>/`) — a `tos`-prefixed name collides with the platform's own nginx entries and the application cannot be opened (Section 8.4.2 / 8.11)
 
 > **Advisory (not part of this checklist):** adding `proxy_pass` to the nginx portal block is listed as an optional improvement in Section 12.10 — it is not required for submission.
 
 ### 12.10 Optional Improvements (Advisory)
 
-Items in this section are **advisory recommendations only**. They are **not** submission requirements, are **not** checked by automatic or manual review, and must **never** be used as a ground to reject, block, or delay a version. Implementing them improves consistency with first-party TOS applications; skipping them is fully acceptable. Mandatory requirements elsewhere in this guide are unaffected — for example the reserved `tos` prefix prohibition (the App ID and the nginx names derived from it must not start with `tos`; 08 §8.4.2 / §8.11, FB-20261017-002) is a **mandatory** naming rule and is deliberately **not** listed here.
+Items in this section are **advisory recommendations only**. They are **not** submission requirements, are **not** checked by automatic or manual review, and must **never** be used as a ground to reject, block, or delay a version. Implementing them improves consistency with first-party TOS applications; skipping them is fully acceptable. Mandatory requirements elsewhere in this guide are unaffected — for example the reserved `tos` prefix prohibition (the App ID and the nginx names derived from it must not start with `tos`; 08 §8.4.2 / §8.11) is a **mandatory** naming rule and is deliberately **not** listed here.
 
 | # | Optional improvement | Applies to | Recommendation | Reference |
 |---|---|---|---|---|
-| 1 | Add `proxy_pass http://127.0.0.1:<listen_port>/;` to the nginx portal block | Deb WebUI external-open applications | **Compliant without it.** The portal block `location /<app_id>/` may carry only the proxy headers (`proxy_http_version` / `proxy_set_header`): this is compliant when the application ships its own frontend Web panel and directly provides the app address, and its service is reachable through the application socket `/var/api/<app_id>.sock` (proxied by the platform's sibling block `location ^~ /v2/proxy/<app_id>/`), so the portal block does not have to forward traffic itself. Adding `proxy_pass` makes the portal address resolve to the backend listening port — a **nice-to-have**; a portal block without `proxy_pass` is **not** a defect and must **not** be treated as a rejection reason (FB-20261017-001; N03 withdrawn; the same calibration applies to all comparable applications, e.g. GitBucket / Sonarr) | 08 §8.3.2 / §8.11 / §8.13.2; 16 §16.1 / §16.2; 19 §19.3 |
+| 1 | Add `proxy_pass http://127.0.0.1:<listen_port>/;` to the nginx portal block | Deb WebUI external-open applications | **Compliant without it.** The portal block `location /<app_id>/` may carry only the proxy headers (`proxy_http_version` / `proxy_set_header`): this is compliant when the application ships its own frontend Web panel and directly provides the app address, and its service is reachable through the application socket `/var/api/<app_id>.sock` (proxied by the platform's sibling block `location ^~ /v2/proxy/<app_id>/`), so the portal block does not have to forward traffic itself. Adding `proxy_pass` makes the portal address resolve to the backend listening port — a **nice-to-have**; a portal block without `proxy_pass` is **not** a defect and must **not** be treated as a rejection reason (N03 withdrawn; the same calibration applies to all comparable applications, e.g. GitBucket / Sonarr) | 08 §8.3.2 / §8.11 / §8.13.2; 16 §16.1 / §16.2; 19 §19.3 |
 
 
 ← [Previous: Package Signing](11_Package_Signing.md) &nbsp;&nbsp;|&nbsp;&nbsp; [Next: Local Testing & Debugging](13_Local_Testing.md) → &nbsp;&nbsp;|&nbsp;&nbsp; [📖 Back to Contents](../README.md)

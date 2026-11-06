@@ -80,190 +80,190 @@ Recommended app port range: **8000–19999** (excluding ports already occupied b
 
 ### Appendix F: Language File Quick Template
 
+> **Version scope:** TOS 7.0 requires the first **14** sections below (`zh-cn` … `pt-pt`); **from TOS 7.1 the required set is 26** — the complete list below, in this order (tags are authoritative, see 8.5.1). In **every** section that is included, `name` / `auth` / `descript` must be non-empty: an untranslated language is written with the **English** text, never left blank. `release_note` / `important` may be empty. Fewer than 26 sections is **not** a rejection ground (review only reminds the developer, see 8.5.9), and supersets are allowed.
+
 ```ini
 [zh-cn]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [zh-hk]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [en-us]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
-
-[fr-fr]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
-
-[de-de]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
-
-[it-it]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
-
-[es-es]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
-
-[hu-hu]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
-
-[ja-jp]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [ko-kr]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
+
+[ja-jp]
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
+
+[de-de]
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
+
+[fr-fr]
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
+
+[it-it]
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
+
+[es-es]
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
+
+[hu-hu]
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [pl-pl]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
-
-[ru-ru]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [tr-tr]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
-[pt-pt]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+[ru-ru]
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
-; --- The remaining 12 languages; the documented baseline is the full 26-language set (see 8.5.1) ---
+[pt-pt]  # last language required by TOS 7.0
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [cs-cz]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [da-dk]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [nl-nl]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [nb-no]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [sv-se]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [el-gr]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [ro-ro]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [th-th]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [vi-vn]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [id-id]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [ar-sa]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 
 [he-il]
-name = ""
-auth = ""
-descript = ""
-release_note = ""
-important = ""
+name = ""            # required — never empty (use English if untranslated)
+auth = ""            # required — never empty (use English if untranslated)
+descript = ""        # required — never empty (use English if untranslated)
+release_note = ""    # optional
+important = ""       # optional
 ```
 
 ### Appendix G: Shared Folder API (Deb Applications)
@@ -290,7 +290,7 @@ Use this checklist when upgrading your app to a new major version:
 - [ ] Changelog/release notes are updated
 - [ ] Upgrade path tested: install old version → add data → upgrade → verify data
 - [ ] Rollback path tested: downgrade or restore from backup
-- [ ] SHA-256 checksums regenerated
+- [ ] Package re-built and re-uploaded (the platform regenerates the SHA-256 value at submission; attaching a `.sha256` file is optional)
 
 ### Appendix I: README.md Template
 
@@ -368,11 +368,11 @@ Complete downloadable config file templates for all app types are available on t
 | Missing languages | app.lang has only 12 languages | Aim at the documented 26-language set (see 8.5.1 and Appendix F), filling untranslated ones with English. Coverage below 26 does not block submission — review only reminds the developer to complete it |
 | root in systemd | `User=root` in service file | Use dedicated user: `User=<appid>` |
 | Docker privileged mode | `privileged: true` in compose | Remove; use fine-grained capabilities |
-| Missing checksum | No .sha256 file submitted | Run `sha256sum <file> > <file>.sha256` |
+| Package integrity mismatch | Downloaded package does not match the platform-generated SHA-256 baseline (a missing `.sha256` attachment is not a failure — the platform generates the value at submission) | Re-build and re-upload the package from the repository Release; verify the Release asset is the build you intend to publish |
 | Version not incremented | v1.0.0 → v1.0.0 (same version) | The version number must be greater than the previously published one; the App Center compares versions numerically, so a non-incremented version would not reach existing users as an update (v1.0.0 → v1.0.1) |
-| App ID or nginx name starts with the reserved `tos` prefix | `"id": "tos-log-server"` (nginx configuration `tos-log-server.conf`, route `location /tos-log-server/`) | Choose an App ID that does not start with `tos` (e.g. `dev-log-server`) and rename the nginx configuration file and route prefix accordingly — `tos` is reserved by the platform in the nginx namespace, so a `tos`-prefixed name collides with the platform's own nginx entries and the application page cannot be opened (FB-20261017-002; see 08 §8.4.2 / §8.11). Automated validation does not check this; it surfaces during functional review as "the app page cannot be opened" |
+| App ID or nginx name starts with the reserved `tos` prefix | `"id": "tos-log-server"` (nginx configuration `tos-log-server.conf`, route `location /tos-log-server/`) | Choose an App ID that does not start with `tos` (e.g. `dev-log-server`) and rename the nginx configuration file and route prefix accordingly — `tos` is reserved by the platform in the nginx namespace, so a `tos`-prefixed name collides with the platform's own nginx entries and the application page cannot be opened (see 08 §8.4.2 / §8.11). Automated validation does not check this; it surfaces during functional review as "the app page cannot be opened" |
 
-**Explicitly not a rejection reason:** a missing `proxy_pass` in the nginx portal block (`location /<app_id>/` carrying proxy headers only) must **not** be used to reject, block, or delay a version. This form is compliant when the application ships its own frontend Web panel and its service is reachable through the application socket `/var/api/<app_id>.sock`; adding `proxy_pass http://127.0.0.1:<listen_port>/;` is an optional improvement only (FB-20261017-001; N03 withdrawn — see 08 §8.3.2 / §8.11 / §8.13.2, 16 §16.1 / §16.2, 19 §19.3, 12 §12.10). Backend port allocation checks and nginx configuration syntax validation remain mandatory and are unrelated to this item.
+**Explicitly not a rejection reason:** a missing `proxy_pass` in the nginx portal block (`location /<app_id>/` carrying proxy headers only) must **not** be used to reject, block, or delay a version. This form is compliant when the application ships its own frontend Web panel and its service is reachable through the application socket `/var/api/<app_id>.sock`; adding `proxy_pass http://127.0.0.1:<listen_port>/;` is an optional improvement only (N03 withdrawn — see 08 §8.3.2.2 / §8.11 / §8.13.2, 16 §16.1 / §16.2, 19 §19.3, 12 §12.10). Backend port allocation checks and nginx configuration syntax validation remain mandatory and are unrelated to this item.
 
 ### Appendix L: Terminology & Definitions
 
@@ -387,9 +387,9 @@ Complete downloadable config file templates for all app types are available on t
 | **Single-Package Mode** | Develop directly according to the TOS 7.0 specification, integrating all files into a single deb package | Single-package mechanism |
 | **WebUI Internal Opening** | App frontend opens within the TOS desktop as an iframe | iframe mode, embedded mode |
 | **WebUI External Opening** | App frontend opens in a new browser tab | New tab mode, external mode |
-| **Reserved `tos` Prefix** | `tos` is reserved by the platform at the beginning of an nginx command / nginx-related name. The App ID (`config.ini.id`) and the nginx names derived from it (`nginx/<appid>.conf`, the route prefix `location /<appid>/`) must not start with `tos` (FB-20261017-002; see 08 §8.4.2 / §8.11) | `tos` prefix collision |
+| **Reserved `tos` Prefix** | `tos` is reserved by the platform at the beginning of an nginx command / nginx-related name. The App ID (`config.ini.id`) and the nginx names derived from it (`nginx/<appid>.conf`, the route prefix `location /<appid>/`) must not start with `tos` (see 08 §8.4.2 / §8.11) | `tos` prefix collision |
 | **No UI Service** | An app without a graphical interface; a background daemon service | Headless service, daemon |
-| **Minimum TOS Version** | The minimum TOS version required by the app; set in the `low_version` field of `config.ini`. Since the 20261019 revision this field is **optional** — leaving it empty declares no minimum TOS version. | Min TOS version, TOS version requirement |
+| **Minimum TOS Version** | The minimum TOS version required by the app; set in the `low_version` field of `config.ini`. This field is **optional** — leaving it empty means the application declares no minimum TOS version; `help` is a **required** field that must be provided on every submission. | Min TOS version, TOS version requirement |
 
 ### Appendix M: Beta App Management
 

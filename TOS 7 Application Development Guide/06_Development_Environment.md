@@ -114,9 +114,11 @@ TOS 7 **does not pre-install a Java runtime**. Developers deploying Java applica
 
 **Option 1: Depend on the TOS App Center Java Runtime**
 
-The TOS App Center provides a standalone Java runtime application. Third-party applications can declare a dependency on this runtime in their package manifest. When users install the application, the system automatically checks for and prompts installation of the Java runtime first.
+The TOS App Center provides a standalone Java runtime application. Third-party applications can declare a dependency on this runtime in the `Depends` field of `DEBIAN/control`. When users install the application, the system automatically checks for and prompts installation of the Java runtime first.
 
-Refer to [Chapter 4 · Package Specification](04_Package_Specification.md) for the specific dependency declaration fields.
+Refer to [Chapter 5 · ABI Compatibility](05_ABI_Compatibility.md#52-declaring-runtime-dependencies) for how runtime dependencies are declared in `DEBIAN/control`.
+
+> **Docker applications:** the dependency channel is different — declare it in the `config.ini` `depend` field (list the runtime application's App ID, and include `DockerEngine`; see [§9.2.1](09_Docker_Development.md#921-docker-specific-configini-fields)) instead of `DEBIAN/control`.
 
 **Option 2: Bundle Java Runtime with the Application**
 
@@ -153,9 +155,11 @@ TOS 7 **does not pre-install PHP**. Developers deploying PHP applications have t
 
 **Option 1: Depend on the TOS App Center PHP Runtime**
 
-The TOS App Center provides a PHP 8.0 runtime application. Declare a dependency on this runtime in your package manifest. When users install the application, the system automatically checks for and prompts installation of the PHP runtime first.
+The TOS App Center provides a PHP 8.0 runtime application. Declare a dependency on this runtime in the `Depends` field of `DEBIAN/control`. When users install the application, the system automatically checks for and prompts installation of the PHP runtime first.
 
-Refer to [Chapter 4 · Package Specification](04_Package_Specification.md) for the specific dependency declaration fields.
+Refer to [Chapter 5 · ABI Compatibility](05_ABI_Compatibility.md#52-declaring-runtime-dependencies) for how runtime dependencies are declared in `DEBIAN/control`.
+
+> **Docker applications:** the dependency channel is different — declare it in the `config.ini` `depend` field (list the runtime application's App ID, and include `DockerEngine`; see [§9.2.1](09_Docker_Development.md#921-docker-specific-configini-fields)) instead of `DEBIAN/control`.
 
 **Option 2: Bundle PHP Runtime with the Application**
 
