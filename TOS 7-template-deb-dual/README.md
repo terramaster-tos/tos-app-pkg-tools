@@ -33,7 +33,7 @@ myapp-dual/
 ├── build.sh                    # Build script
 ├── data-pkg/                   # TOS platform data package
 │   ├── config.ini              # Platform metadata
-│   ├── myapp.lang              # Multilingual file (14 languages)
+│   ├── myapp.lang              # Multilingual file (26 languages)
 │   ├── images/
 │   │   └── icons/
 │   │       └── myapp.svg       # App icon (SVG)
