@@ -1,10 +1,3 @@
-[en-us]
-name = "MyApp"
-auth = "Your Name"
-descript = "A TOS 7 application using Deb dual-package mode."
-release_note = "1. Initial release."
-important = "This application uses dual-package mode. Please ensure myapp-source is installed first."
-
 [zh-cn]
 name = "我的应用"
 auth = "你的名字"
@@ -19,11 +12,25 @@ descript = "使用 Deb 雙包模式的 TOS 7 應用。"
 release_note = "1. 首次發佈。"
 important = ""
 
-[fr-fr]
+[en-us]
 name = "MyApp"
 auth = "Your Name"
-descript = "Une application TOS 7 utilisant le mode double paquet Deb."
-release_note = "1. Version initiale."
+descript = "A TOS 7 application using Deb dual-package mode."
+release_note = "1. Initial release."
+important = "This application uses dual-package mode. Please ensure myapp-source is installed first."
+
+[ko-kr]
+name = "MyApp"
+auth = "Your Name"
+descript = "Deb 듀얼 패키지 모드를 사용하는 TOS 7 애플리케이션."
+release_note = "1. 최초 릴리스."
+important = ""
+
+[ja-jp]
+name = "MyApp"
+auth = "Your Name"
+descript = "Deb デュアルパッケージモードを使用した TOS 7 アプリケーション。"
+release_note = "1. 初回リリース。"
 important = ""
 
 [de-de]
@@ -31,6 +38,13 @@ name = "MyApp"
 auth = "Your Name"
 descript = "Eine TOS 7-Anwendung im Deb-Dual-Package-Modus."
 release_note = "1. Erstveröffentlichung."
+important = ""
+
+[fr-fr]
+name = "MyApp"
+auth = "Your Name"
+descript = "Une application TOS 7 utilisant le mode double paquet Deb."
+release_note = "1. Version initiale."
 important = ""
 
 [it-it]
@@ -54,32 +68,11 @@ descript = "TOS 7 alkalmazás Deb kettős csomag módban."
 release_note = "1. Első kiadás."
 important = ""
 
-[ja-jp]
-name = "MyApp"
-auth = "Your Name"
-descript = "Deb デュアルパッケージモードを使用した TOS 7 アプリケーション。"
-release_note = "1. 初回リリース。"
-important = ""
-
-[ko-kr]
-name = "MyApp"
-auth = "Your Name"
-descript = "Deb 듀얼 패키지 모드를 사용하는 TOS 7 애플리케이션."
-release_note = "1. 최초 릴리스."
-important = ""
-
 [pl-pl]
 name = "MyApp"
 auth = "Your Name"
 descript = "Aplikacja TOS 7 w trybie podwójnego pakietu Deb."
 release_note = "1. Pierwsze wydanie."
-important = ""
-
-[ru-ru]
-name = "MyApp"
-auth = "Your Name"
-descript = "Приложение TOS 7 в режиме двойного пакета Deb."
-release_note = "1. Первый выпуск."
 important = ""
 
 [tr-tr]
@@ -89,9 +82,100 @@ descript = "Deb çift paket modunu kullanan bir TOS 7 uygulaması."
 release_note = "1. İlk sürüm."
 important = ""
 
+[ru-ru]
+name = "MyApp"
+auth = "Your Name"
+descript = "Приложение TOS 7 в режиме двойного пакета Deb."
+release_note = "1. Первый выпуск."
+important = ""
+
 [pt-pt]
 name = "MyApp"
 auth = "Your Name"
 descript = "Uma aplicação TOS 7 no modo de pacote duplo Deb."
 release_note = "1. Versão inicial."
 important = ""
+
+[cs-cz]
+name = "MyApp"
+auth = "Vaše jméno"
+descript = "Aplikace TOS 7 využívající režim dvou balíčků Deb."
+release_note = "1. První vydání."
+important = "Tato aplikace používá režim dvou balíčků. Nejprve nainstalujte myapp-source."
+
+[da-dk]
+name = "MyApp"
+auth = "Dit navn"
+descript = "En TOS 7-applikation, der bruger Deb-dobbeltpakkemodus."
+release_note = "1. Første udgivelse."
+important = "Denne applikation bruger dobbeltpakkemodus. Sørg for, at myapp-source er installeret først."
+
+[nl-nl]
+name = "MyApp"
+auth = "Uw naam"
+descript = "Een TOS 7-applicatie die de Deb-dualpackagemodus gebruikt."
+release_note = "1. Eerste release."
+important = "Deze applicatie gebruikt de dualpackagemodus. Zorg ervoor dat myapp-source eerst is geïnstalleerd."
+
+[nb-no]
+name = "MyApp"
+auth = "Ditt navn"
+descript = "En TOS 7-applikasjon som bruker Deb-toppakkemodus."
+release_note = "1. Første utgivelse."
+important = "Denne applikasjonen bruker toppakkemodus. Sørg for at myapp-source er installert først."
+
+[sv-se]
+name = "MyApp"
+auth = "Ditt namn"
+descript = "En TOS 7-applikation som använder Deb-läget för dubbla paket."
+release_note = "1. Första utgåvan."
+important = "Den här applikationen använder läget för dubbla paket. Se till att myapp-source är installerat först."
+
+[el-gr]
+name = "MyApp"
+auth = "Το όνομά σας"
+descript = "Μια εφαρμογή TOS 7 που χρησιμοποιεί λειτουργία διπλού πακέτου Deb."
+release_note = "1. Αρχική έκδοση."
+important = "Αυτή η εφαρμογή χρησιμοποιεί λειτουργία διπλού πακέτου. Βεβαιωθείτε ότι το myapp-source είναι εγκατεστημένο πρώτα."
+
+[ro-ro]
+name = "MyApp"
+auth = "Numele dvs."
+descript = "O aplicație TOS 7 care utilizează modul Deb cu pachet dublu."
+release_note = "1. Prima versiune."
+important = "Această aplicație utilizează modul cu pachet dublu. Asigurați-vă că myapp-source este instalat mai întâi."
+
+[th-th]
+name = "MyApp"
+auth = "ชื่อของคุณ"
+descript = "แอปพลิเคชัน TOS 7 ที่ใช้โหมด Deb แบบสองแพ็กเกจ"
+release_note = "1. เผยแพร่ครั้งแรก"
+important = "แอปพลิเคชันนี้ใช้โหมดสองแพ็กเกจ โปรดติดตั้ง myapp-source ก่อน"
+
+[vi-vn]
+name = "MyApp"
+auth = "Tên của bạn"
+descript = "Ứng dụng TOS 7 sử dụng chế độ Deb hai gói."
+release_note = "1. Phát hành lần đầu."
+important = "Ứng dụng này sử dụng chế độ hai gói. Vui lòng cài đặt myapp-source trước."
+
+[id-id]
+name = "MyApp"
+auth = "Nama Anda"
+descript = "Aplikasi TOS 7 yang menggunakan mode Deb paket ganda."
+release_note = "1. Rilis awal."
+important = "Aplikasi ini menggunakan mode paket ganda. Pastikan myapp-source sudah terpasang terlebih dahulu."
+
+[ar-sa]
+name = "MyApp"
+auth = "اسمك"
+descript = "تطبيق TOS 7 يستخدم وضع Deb ثنائي الحزمة."
+release_note = "1. الإصدار الأول."
+important = "يستخدم هذا التطبيق الوضع ثنائي الحزمة. يرجى التأكد من تثبيت myapp-source أولاً."
+
+[he-il]
+name = "MyApp"
+auth = "השם שלך"
+descript = "אפליקציית TOS 7 המשתמשת במצב Deb של חבילה כפולה."
+release_note = "1. גרסה ראשונית."
+important = "אפליקציה זו משתמשת במצב חבילה כפולה. יש להתקין את myapp-source תחילה."
