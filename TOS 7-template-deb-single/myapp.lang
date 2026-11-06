@@ -1,10 +1,3 @@
-[en-us]
-name = "MyApp"
-auth = "Your Name"
-descript = "A TOS 7 application built with the Deb single-package template."
-release_note = "1. Initial release."
-important = ""
-
 [zh-cn]
 name = "我的应用"
 auth = "你的名字"
@@ -19,11 +12,25 @@ descript = "基於 Deb 單包模板構建的 TOS 7 應用。"
 release_note = "1. 首次發佈。"
 important = ""
 
-[fr-fr]
+[en-us]
 name = "MyApp"
 auth = "Your Name"
-descript = "Une application TOS 7 construite avec le modèle de paquet unique Deb."
-release_note = "1. Version initiale."
+descript = "A TOS 7 application built with the Deb single-package template."
+release_note = "1. Initial release."
+important = ""
+
+[ko-kr]
+name = "MyApp"
+auth = "Your Name"
+descript = "Deb 단일 패키지 템플릿으로 빌드된 TOS 7 애플리케이션."
+release_note = "1. 최초 릴리스."
+important = ""
+
+[ja-jp]
+name = "MyApp"
+auth = "Your Name"
+descript = "Deb シングルパッケージテンプレートで構築された TOS 7 アプリケーション。"
+release_note = "1. 初回リリース。"
 important = ""
 
 [de-de]
@@ -31,6 +38,13 @@ name = "MyApp"
 auth = "Your Name"
 descript = "Eine TOS 7-Anwendung, die mit der Deb-Single-Package-Vorlage erstellt wurde."
 release_note = "1. Erstveröffentlichung."
+important = ""
+
+[fr-fr]
+name = "MyApp"
+auth = "Your Name"
+descript = "Une application TOS 7 construite avec le modèle de paquet unique Deb."
+release_note = "1. Version initiale."
 important = ""
 
 [it-it]
@@ -54,32 +68,11 @@ descript = "TOS 7 alkalmazás, amely a Deb egycsomagos sablonnal készült."
 release_note = "1. Első kiadás."
 important = ""
 
-[ja-jp]
-name = "MyApp"
-auth = "Your Name"
-descript = "Deb シングルパッケージテンプレートで構築された TOS 7 アプリケーション。"
-release_note = "1. 初回リリース。"
-important = ""
-
-[ko-kr]
-name = "MyApp"
-auth = "Your Name"
-descript = "Deb 단일 패키지 템플릿으로 빌드된 TOS 7 애플리케이션."
-release_note = "1. 최초 릴리스."
-important = ""
-
 [pl-pl]
 name = "MyApp"
 auth = "Your Name"
 descript = "Aplikacja TOS 7 zbudowana przy użyciu szablonu pojedynczego pakietu Deb."
 release_note = "1. Pierwsze wydanie."
-important = ""
-
-[ru-ru]
-name = "MyApp"
-auth = "Your Name"
-descript = "Приложение TOS 7, созданное с использованием шаблона одиночного пакета Deb."
-release_note = "1. Первый выпуск."
 important = ""
 
 [tr-tr]
@@ -89,9 +82,100 @@ descript = "Deb tek paket şablonu ile oluşturulmuş bir TOS 7 uygulaması."
 release_note = "1. İlk sürüm."
 important = ""
 
+[ru-ru]
+name = "MyApp"
+auth = "Your Name"
+descript = "Приложение TOS 7, созданное с использованием шаблона одиночного пакета Deb."
+release_note = "1. Первый выпуск."
+important = ""
+
 [pt-pt]
 name = "MyApp"
 auth = "Your Name"
 descript = "Uma aplicação TOS 7 construída com o modelo de pacote único Deb."
 release_note = "1. Versão inicial."
+important = ""
+
+[cs-cz]
+name = "MyApp"
+auth = "Vaše jméno"
+descript = "Aplikace TOS 7 vytvořená pomocí šablony Deb pro jeden balíček."
+release_note = "1. První vydání."
+important = ""
+
+[da-dk]
+name = "MyApp"
+auth = "Dit navn"
+descript = "En TOS 7-applikation bygget med Deb-enkeltpakkemodellen."
+release_note = "1. Første udgivelse."
+important = ""
+
+[nl-nl]
+name = "MyApp"
+auth = "Uw naam"
+descript = "Een TOS 7-applicatie gebouwd met de Deb-singlepackagesjabloon."
+release_note = "1. Eerste release."
+important = ""
+
+[nb-no]
+name = "MyApp"
+auth = "Ditt navn"
+descript = "En TOS 7-applikasjon bygget med Deb-enkeltpakkemalen."
+release_note = "1. Første utgivelse."
+important = ""
+
+[sv-se]
+name = "MyApp"
+auth = "Ditt namn"
+descript = "En TOS 7-applikation byggd med Deb-mallen för ett paket."
+release_note = "1. Första utgåvan."
+important = ""
+
+[el-gr]
+name = "MyApp"
+auth = "Το όνομά σας"
+descript = "Μια εφαρμογή TOS 7 που δημιουργήθηκε με το πρότυπο μεμονωμένου πακέτου Deb."
+release_note = "1. Αρχική έκδοση."
+important = ""
+
+[ro-ro]
+name = "MyApp"
+auth = "Numele dvs."
+descript = "O aplicație TOS 7 creată cu șablonul Deb cu un singur pachet."
+release_note = "1. Prima versiune."
+important = ""
+
+[th-th]
+name = "MyApp"
+auth = "ชื่อของคุณ"
+descript = "แอปพลิเคชัน TOS 7 ที่สร้างด้วยเทมเพลต Deb แบบแพ็กเกจเดียว"
+release_note = "1. เผยแพร่ครั้งแรก"
+important = ""
+
+[vi-vn]
+name = "MyApp"
+auth = "Tên của bạn"
+descript = "Ứng dụng TOS 7 được tạo bằng mẫu Deb gói đơn."
+release_note = "1. Phát hành lần đầu."
+important = ""
+
+[id-id]
+name = "MyApp"
+auth = "Nama Anda"
+descript = "Aplikasi TOS 7 yang dibuat dengan templat Deb paket tunggal."
+release_note = "1. Rilis awal."
+important = ""
+
+[ar-sa]
+name = "MyApp"
+auth = "اسمك"
+descript = "تطبيق TOS 7 تم إنشاؤه باستخدام قالب Deb أحادي الحزمة."
+release_note = "1. الإصدار الأول."
+important = ""
+
+[he-il]
+name = "MyApp"
+auth = "השם שלך"
+descript = "אפליקציית TOS 7 שנבנתה עם תבנית Deb לחבילה בודדת."
+release_note = "1. גרסה ראשונית."
 important = ""
