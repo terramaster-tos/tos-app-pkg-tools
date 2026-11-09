@@ -1,9 +1,9 @@
-# TOSAppSelfTestingTool User Guide (English)
+# TOSAppSelfTestingTool User Guide 
 
 > **Audience**: Third-party TOS app developers, including those **without a TOS NAS device**
 > **Tool version**: v1.0.3 (beta), check with `./TOSAppSelfTestingTool -v` · [This release](https://github.com/terramaster-tos/tos-app-pkg-tools/releases/tag/v1.0.3-beta)
 > **Applicable platform**: TOS 7.0 and above
-> **中文版**: see [README_zh-CN.md](README_zh-CN.md)
+
 
 ---
 
