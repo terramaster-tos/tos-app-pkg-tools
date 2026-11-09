@@ -1,9 +1,9 @@
-# TOSAppSelfTestingTool User Guide 
+# TOSAppSelfTestingTool User Guide (English)
 
 > **Audience**: Third-party TOS app developers, including those **without a TOS NAS device**
 > **Tool version**: v1.0.3 (beta), check with `./TOSAppSelfTestingTool -v` · [This release](https://github.com/terramaster-tos/tos-app-pkg-tools/releases/tag/v1.0.3-beta)
 > **Applicable platform**: TOS 7.0 and above
-
+> **中文版**: see [README_zh-CN.md](README_zh-CN.md)
 
 ---
 
@@ -52,29 +52,31 @@ This is a **Linux command-line tool**. It cannot run natively on Windows / macOS
 
 All releases are published on the repo Releases page: **https://github.com/terramaster-tos/tos-app-pkg-tools/releases**
 
-| File | Permanent link (always points to the latest release) | Link (pinned to v1.0.3-beta) |
-|---|---|---|
-| `TOSAppSelfTestingTool_amd64` | https://github.com/terramaster-tos/tos-app-pkg-tools/releases/latest/download/TOSAppSelfTestingTool_amd64 | https://github.com/terramaster-tos/tos-app-pkg-tools/releases/download/v1.0.3-beta/TOSAppSelfTestingTool_amd64 |
-| `TOSAppSelfTestingTool_arm64` | https://github.com/terramaster-tos/tos-app-pkg-tools/releases/latest/download/TOSAppSelfTestingTool_arm64 | https://github.com/terramaster-tos/tos-app-pkg-tools/releases/download/v1.0.3-beta/TOSAppSelfTestingTool_arm64 |
-| `SHA256SUMS` | https://github.com/terramaster-tos/tos-app-pkg-tools/releases/latest/download/SHA256SUMS | https://github.com/terramaster-tos/tos-app-pkg-tools/releases/download/v1.0.3-beta/SHA256SUMS |
+Current release **v1.0.3 (beta)** — download links (verified working):
+
+| File | Download link (v1.0.3-beta) |
+|---|---|
+| `TOSAppSelfTestingTool_amd64` | https://github.com/terramaster-tos/tos-app-pkg-tools/releases/download/v1.0.3-beta/TOSAppSelfTestingTool_amd64 |
+| `TOSAppSelfTestingTool_arm64` | https://github.com/terramaster-tos/tos-app-pkg-tools/releases/download/v1.0.3-beta/TOSAppSelfTestingTool_arm64 |
+| `SHA256SUMS` | https://github.com/terramaster-tos/tos-app-pkg-tools/releases/download/v1.0.3-beta/SHA256SUMS |
 
 Download directly from the command line (on Ubuntu / TOS):
 
 ```bash
 # x86_64 machines
-wget https://github.com/terramaster-tos/tos-app-pkg-tools/releases/latest/download/TOSAppSelfTestingTool_amd64
+wget https://github.com/terramaster-tos/tos-app-pkg-tools/releases/download/v1.0.3-beta/TOSAppSelfTestingTool_amd64
 
 # ARM machines
-wget https://github.com/terramaster-tos/tos-app-pkg-tools/releases/latest/download/TOSAppSelfTestingTool_arm64
+wget https://github.com/terramaster-tos/tos-app-pkg-tools/releases/download/v1.0.3-beta/TOSAppSelfTestingTool_arm64
 
 # (optional) fetch checksums and verify integrity
-wget https://github.com/terramaster-tos/tos-app-pkg-tools/releases/latest/download/SHA256SUMS
+wget https://github.com/terramaster-tos/tos-app-pkg-tools/releases/download/v1.0.3-beta/SHA256SUMS
 sha256sum -c --ignore-missing SHA256SUMS
 ```
 
 > Notes:
-> - The `releases/latest/download/` link always points to the **latest release** — CI scripts can reference it without being updated per version
-> - To **pin a specific version**, replace `latest/download` with `download/<version-tag>`, e.g. `releases/download/v1.0.3-beta/TOSAppSelfTestingTool_amd64`
+> - To **pin a specific version**, use the `releases/download/<version-tag>/<asset>` form shown above — e.g. `releases/download/v1.0.3-beta/TOSAppSelfTestingTool_amd64`
+> - The `releases/latest/download/<asset>` form will start working once a **non-prerelease (stable)** version is published. While the current release is marked beta/pre-release, `latest` resolves to nothing and returns 404 — always use the pinned links during the beta phase
 > - These links work only if the release asset names match the table exactly (do not add version suffixes to asset file names when publishing)
 
 ### 3.2 Pick the Right Architecture
@@ -173,39 +175,45 @@ chmod +x TOSAppSelfTestingTool_amd64
 - Cross-package rules (data package `Depends` on the source package, `system_id` matching the source package's service file, `config.ini.package` matching the data package, etc.) are **not** cross-validated by the tool yet — verify them manually per Development Guide sections 8.13/8.17
 - Whole-archive checking and dual-package install verification (`-i`) will require a later release
 
-### 5.2 Output Examples (all captured on a real device)
+### 5.2 Output Examples (English output, v1.0.3)
+
+> The tool prints **English by default** (`-l en`). Samples below reproduce the built-in English messages of v1.0.3; exact wording and rule ordering may vary slightly depending on the package under test — your own run output is authoritative.
 
 **① All checks passed** (single line, exit code 0):
 
 ```
 $ ./TOSAppSelfTestingTool -c docker_AdGuardHome-v0.107.77.tar.gz
-检测通过
+check passed
 ```
 
 **② Blocking issues found** (check runs to completion, all issues listed, exit code 1):
 
 ```
 $ ./TOSAppSelfTestingTool -c bad_docker.tar.gz
-ERROR [C10] config.ini: 缺少必填字段 relation
-ERROR [C25] config.ini: docker 应用 relation 必须填写 docker 和 DockerEngine
-检测未通过: 阻断项 2 / 提示项 0
+ERROR [C10] config.ini: missing required field 'relation'
+ERROR [C25] config.ini: docker app relation must include 'docker' and 'DockerEngine'
+check failed: 2 blocking / 0 warnings
 ```
 
 **③ Advisory items only** (still passes, exit code 0):
 
 ```
 $ ./TOSAppSelfTestingTool -c warn_docker.tar.gz
-WARN  [D20] extra.txt: 包内含额外顶层条目(规范仅需 config.ini/<app_id>.lang/docker-compose.yml 与图标; ...)
-检测通过: 提示项 1
+WARN  [D20] extra.txt: docker package should not contain extra top-level entries
+check passed: 1 warnings
 ```
 
 **④ Checking an already-installed app directory** (adds an advisory note that does not affect the verdict):
 
 ```
 $ ./TOSAppSelfTestingTool -c /Volume1/@apps/DockerEngine/application/AdGuardHomeDocker
-检测通过
-提示: 该目录是已安装形态(非打包前目录): 安装流程会改写 config.ini 并解开 webui, ...
+check passed
+this directory is an installed form (not a pre-package directory): the install flow rewrites config.ini
+and unpacks webui; findings reflect the post-install layout and do not mean the package itself is
+non-conforming
 ```
+
+To see the same output in Chinese, add `-l zh-cn` (see Section 8).
 
 ### 5.3 Notes
 
@@ -222,7 +230,7 @@ $ ./TOSAppSelfTestingTool -c /Volume1/@apps/DockerEngine/application/AdGuardHome
 
 ```
 $ ./TOSAppSelfTestingTool -i yourapp_1.0.0_amd64.deb
-yourapp_1.0.0_amd64.deb 是 deb 成品: 当前版本 install 仅支持 docker 应用包(.tar.gz), deb 安装暂未支持
+yourapp_1.0.0_amd64.deb is a deb package: install currently supports docker app packages (.tar.gz) only; deb is not supported
 ```
 
 - Run as **root** (`sudo`)
@@ -233,18 +241,18 @@ yourapp_1.0.0_amd64.deb 是 deb 成品: 当前版本 install 仅支持 docker �
 
 ```
 $ sudo ./TOSAppSelfTestingTool -i docker_AdGuardHome-v0.107.77.tar.gz
-[ 10%] [##------------------] 解压应用包 → /Volume1/@apps/DockerEngine/application/.install-staging-...
-[ 20%] [####----------------] 检测文件完整性
-[ 25%] [#####---------------] 检测字段合法性
-[ 35%] [#######-------------] 检查 compose 项目名 adguardhome
-[ 41%] [########------------] 落地安装目录 → /Volume1/@apps/DockerEngine/application/AdGuardHomeDocker
-[ 48%] [#########-----------] 写入 docker-compose.yml
-[ 62%] [############--------] 拉取镜像并同步共享目录权限
-[ 77%] [###############-----] 创建容器
-[ 83%] [################----] 更新应用访问路径与安装数据
-[ 91%] [##################--] 执行安装后处理 (post-install)
-[100%] [####################] 启动容器
-安装完成: AdGuardHomeDocker, compose 项目 adguardhome, 安装目录 /Volume1/@apps/DockerEngine/application/AdGuardHomeDocker
+[ 10%] [##------------------] extracting package -> /Volume1/@apps/DockerEngine/application/.install-staging-...
+[ 20%] [####----------------] checking file integrity
+[ 25%] [#####---------------] checking field conformance
+[ 35%] [#######-------------] checking compose project name adguardhome
+[ 41%] [########------------] moving to the install dir -> /Volume1/@apps/DockerEngine/application/AdGuardHomeDocker
+[ 48%] [#########-----------] writing docker-compose.yml
+[ 62%] [############--------] pulling images and syncing share folder ownership
+[ 77%] [###############-----] creating containers
+[ 83%] [################----] updating app access path and install data
+[ 91%] [##################--] running post-install
+[100%] [####################] starting containers
+installed: AdGuardHomeDocker, compose project adguardhome, install dir /Volume1/@apps/DockerEngine/application/AdGuardHomeDocker
 ```
 
 The flow has two stages:
@@ -256,11 +264,11 @@ The flow has two stages:
 
 ```
 $ sudo ./TOSAppSelfTestingTool -i bad_docker.tar.gz
-[ 10%] [##------------------] 解压应用包
-[ 20%] [####----------------] 检测文件完整性
-[ 25%] [#####---------------] 检测字段合法性
-ERROR [C10] config.ini: 缺少必填字段 relation
-检测未通过, 终止安装
+[ 10%] [##------------------] extracting package
+[ 20%] [####----------------] checking file integrity
+[ 25%] [#####---------------] checking field conformance
+ERROR [C10] config.ini: missing required field 'relation'
+check failed, installation aborted
 ```
 
 ### 6.3 Post-install Processing (automatic, identical to App Center behavior)
@@ -274,20 +282,20 @@ ERROR [C10] config.ini: 缺少必填字段 relation
 
 | Failure stage | Output & leftovers |
 |---|---|
-| Blocking issue at check | First error + `检测未通过, 终止安装`; existing installation untouched |
+| Blocking issue at check | First error + `check failed, installation aborted`; existing installation untouched |
 | Image pull failure (62%) | Single-line error, then abort; unpacked directory deleted |
 | Container creation failure (77%) | Single-line error; unpacked directory deleted |
-| Container start failure (100%) | Single-line error + `安装完成(未启动): ...`; **install directory retained** for troubleshooting / manual start |
+| Container start failure (100%) | Single-line error + `installed (not started): ...`; **install directory retained** for troubleshooting / manual start |
 | Post-install failure (91%) | Single-line error; install directory retained, container not started |
 
 Image pull failure example (no network):
 
 ```
-[ 62%] [############--------] 拉取镜像并同步共享目录权限
-安装失败: Error response from daemon: failed to resolve reference "docker.io/adguard/adguardhome:v0.107.77": ...
+[ 62%] [############--------] pulling images and syncing share folder ownership
+install failed: Error response from daemon: failed to resolve reference "docker.io/adguard/adguardhome:v0.107.77": ...
 ```
 
-> Failure messages print the bare error only; everything after `安装失败:` is the raw docker / system error.
+> Failure messages print the bare error only; everything after `install failed:` is the raw docker / system error.
 
 ---
 
