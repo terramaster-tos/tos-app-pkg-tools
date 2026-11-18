@@ -7,17 +7,18 @@ APPID="myapp"
 systemctl daemon-reload
 
 if [ "$1" = "purge" ]; then
-    # Remove user
-    if id -u "${APPID}" > /dev/null 2>&1; then
-        userdel "${APPID}" 2>/dev/null || true
-    fi
+    # (User deletion is handled by the platform automatically. 
+    # DO NOT use userdel here.)
 
     # Clean up persistent data and app directory
     rm -rf "/var/lib/${APPID}" 2>/dev/null || true
     rm -rf "/var/log/${APPID}" 2>/dev/null || true
     rm -rf "/usr/local/${APPID}" 2>/dev/null || true
     rm -f "/var/api/${APPID}.sock" 2>/dev/null || true
-    rm -f "/etc/systemd/system/${APPID}.service" 2>/dev/null || true
+    
+    # Note: The systemd unit file is installed under /usr/local/<appid>/init.d/ 
+    # and is removed automatically by dpkg. Do not manually delete from /etc/systemd/system.
+    
     systemctl daemon-reload 2>/dev/null || true
 fi
 
