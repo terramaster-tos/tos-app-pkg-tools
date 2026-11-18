@@ -31,7 +31,7 @@ RemoveIPC=true
 SystemCallArchitectures=native
 
 # Read-write paths
-ReadWritePaths=/usr/local/myapp /var/lib/myapp /var/log/myapp
+ReadWritePaths=/usr/local/<appid>/data /usr/local/<appid>/logs /var/api
 
 # Resource limits
 LimitNOFILE=65536
