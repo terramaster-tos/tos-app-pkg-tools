@@ -111,16 +111,15 @@ cp source-pkg/DEBIAN/control "${SOURCE_STAGING}/DEBIAN/"
 sed -i "s/^Version:.*$/Version: ${VERSION}/" "${SOURCE_STAGING}/DEBIAN/control"
 sed -i "s/^Architecture:.*$/Architecture: ${DPKG_ARCH}/" "${SOURCE_STAGING}/DEBIAN/control"
 
-# postinst — create the service user, then enable + start the service on the
-# fresh-install AND on the upgrade path ($2 = previous version, used for data
-# migration). An upgrade must never leave the service stopped/disabled.
+# postinst — enable + start the service on the fresh-install AND on the upgrade
+# path ($2 = previous version, used for data migration). An upgrade must never
+# leave the service stopped/disabled.
+# NOTE: The application user is automatically created by the platform. 
+# DO NOT run useradd here.
 cat > "${SOURCE_STAGING}/DEBIAN/postinst" << POSTINSTEOF
 #!/bin/bash
 set -e
 APPID="${APPID}"
-if ! id "\${APPID}" >/dev/null 2>&1; then
-    useradd -r -s /usr/sbin/nologin -d "/usr/local/\${APPID}" "\${APPID}"
-fi
 chown -R "\${APPID}:\${APPID}" "/usr/local/\${APPID}"
 
 # \$1 = "configure" (also on upgrade), \$2 = version installed before
