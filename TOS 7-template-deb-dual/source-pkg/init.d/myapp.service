@@ -14,7 +14,7 @@ ExecStart=/usr/local/myapp/bin/myapp
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/myapp /var/log/myapp
+ReadWritePaths=/usr/local/<appid>/data /usr/local/<appid>/logs /var/api
 LimitNOFILE=65536
 
 [Install]
