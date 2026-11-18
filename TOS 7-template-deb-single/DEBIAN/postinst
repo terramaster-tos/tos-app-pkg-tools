@@ -5,11 +5,6 @@ set -e
 APPID="myapp"
 APP_DIR="/usr/local/${APPID}"
 
-# Create dedicated user
-if ! id -u "${APPID}" > /dev/null 2>&1; then
-    useradd --system --no-create-home --shell /usr/sbin/nologin "${APPID}" 2>/dev/null || true
-fi
-
 # Set permissions
 chown -R "${APPID}:${APPID}" "${APP_DIR}" 2>/dev/null || true
 chown -R "${APPID}:${APPID}" "/var/lib/${APPID}" 2>/dev/null || true
