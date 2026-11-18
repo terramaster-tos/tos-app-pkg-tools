@@ -5,6 +5,9 @@ set -e
 APPID="myapp"
 APP_DIR="/usr/local/${APPID}"
 
+# Create runtime dirs; tolerate failure, suppress error log, do not block installation
+mkdir -p "/usr/local/${APPID}/data" "/usr/local/${APPID}/logs" 2>/dev/null || true
+
 # Set permissions
 chown -R "${APPID}:${APPID}" "${APP_DIR}" 2>/dev/null || true
 chown -R "${APPID}:${APPID}" "/var/lib/${APPID}" 2>/dev/null || true
