@@ -6,10 +6,10 @@ StartLimitIntervalSec=60
 
 [Service]
 Type=simple
-User=myapp
-Group=myapp
-WorkingDirectory=/usr/local/myapp
-ExecStart=/usr/local/myapp/bin/myapp
+User=<appid>
+Group=<appid>
+WorkingDirectory=/usr/local/<appid>
+ExecStart=/usr/local/<appid>/bin/<appid>
 
 NoNewPrivileges=true
 ProtectSystem=strict
