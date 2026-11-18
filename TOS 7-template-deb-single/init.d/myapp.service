@@ -6,11 +6,11 @@ StartLimitIntervalSec=60
 
 [Service]
 Type=simple
-User=myapp
-Group=myapp
-WorkingDirectory=/usr/local/myapp
-ExecStart=/usr/local/myapp/bin/myapp
-EnvironmentFile=/usr/local/myapp/myapp.env
+User=<appid>
+Group=<appid>
+WorkingDirectory=/usr/local/<appid>
+ExecStart=/usr/local/<appid>/bin/<appid>
+EnvironmentFile=/usr/local/<appid>/<appid>.env
 TimeoutStartSec=30
 TimeoutStopSec=10
 
@@ -18,7 +18,6 @@ TimeoutStopSec=10
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-PrivateTmp=true
 PrivateDevices=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
