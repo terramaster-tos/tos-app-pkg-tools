@@ -6,11 +6,11 @@ StartLimitIntervalSec=60
 
 [Service]
 Type=simple
-User=<appid>
-Group=<appid>
-WorkingDirectory=/usr/local/<appid>
-ExecStart=/usr/local/<appid>/bin/<appid>
-EnvironmentFile=/usr/local/<appid>/<appid>.env
+User=myapp
+Group=myapp
+WorkingDirectory=/usr/local/myapp
+ExecStart=/usr/local/myapp/bin/myapp
+EnvironmentFile=/usr/local/myapp/myapp.env
 TimeoutStartSec=30
 TimeoutStopSec=10
 
