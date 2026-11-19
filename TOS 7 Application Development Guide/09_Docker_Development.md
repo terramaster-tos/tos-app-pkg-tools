@@ -221,7 +221,6 @@ x-app-meta:
   "open_path": true,
   "help": "https://github.com/example/myapp/wiki",
   "version": "1.0.0",
-  "recommend": false,
   "beta": false,
   "low_version": "TOS7.0",
   "category": ["Utilities"],
