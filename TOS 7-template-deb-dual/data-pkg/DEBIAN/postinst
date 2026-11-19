@@ -13,7 +13,4 @@ chmod 644 "/usr/local/${APPID}/config.ini" 2>/dev/null || true
 chmod 644 "/usr/local/${APPID}/${APPID}.lang" 2>/dev/null || true
 chmod 644 "/usr/local/${APPID}/images/icons/${APPID}.svg" 2>/dev/null || true
 
-# Create runtime dirs; tolerate failure, suppress error log, do not block installation
-mkdir -p "/usr/local/${APPID}/data" "/usr/local/${APPID}/logs" 2>/dev/null || true
-
 exit 0
