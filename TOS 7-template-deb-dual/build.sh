@@ -120,6 +120,10 @@ cat > "${SOURCE_STAGING}/DEBIAN/postinst" << POSTINSTEOF
 #!/bin/bash
 set -e
 APPID="${APPID}"
+
+# Create runtime dirs; must exist for ReadWritePaths in the .service file
+mkdir -p "/usr/local/\${APPID}/data" "/usr/local/\${APPID}/logs" "/var/api" 2>/dev/null || true
+
 chown -R "\${APPID}:\${APPID}" "/usr/local/\${APPID}"
 
 # \$1 = "configure" (also on upgrade), \$2 = version installed before
