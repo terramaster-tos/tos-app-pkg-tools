@@ -11,8 +11,6 @@ if [ "$1" = "purge" ]; then
     # DO NOT use userdel here.)
 
     # Clean up persistent data and app directory
-    rm -rf "/var/lib/${APPID}" 2>/dev/null || true
-    rm -rf "/var/log/${APPID}" 2>/dev/null || true
     rm -rf "/usr/local/${APPID}" 2>/dev/null || true
     rm -f "/var/api/${APPID}.sock" 2>/dev/null || true
     
