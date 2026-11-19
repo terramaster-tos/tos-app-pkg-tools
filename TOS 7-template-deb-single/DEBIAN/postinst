@@ -10,7 +10,6 @@ mkdir -p "/usr/local/${APPID}/data" "/usr/local/${APPID}/logs" 2>/dev/null || tr
 
 # Set permissions
 chown -R "${APPID}:${APPID}" "${APP_DIR}" 2>/dev/null || true
-chown -R "${APPID}:${APPID}" "/var/lib/${APPID}" 2>/dev/null || true
 
 # Decompress webui.bz2 if present
 if [ -f "${APP_DIR}/webui.bz2" ]; then
