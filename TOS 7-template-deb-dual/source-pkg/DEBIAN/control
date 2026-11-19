@@ -3,7 +3,7 @@ Version: 1.0.0
 Architecture: amd64
 Section: utils
 Priority: optional
-Maintainer: Upstream Maintainer <upstream@example.com>
-Depends: libc6 (>= 2.34), systemd
-Description: My Application - Binary Package
- This is the core application binary package.
+Maintainer: Your Name <your.email@example.com>
+Depends: libc6, systemd
+Description: My Application Source Package
+ Source package for My Application on TOS 7.
