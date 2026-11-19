@@ -73,7 +73,7 @@ cp data-pkg/DEBIAN/control   "${DATA_STAGING}/DEBIAN/"
 # Update version in control file
 sed -i "s/^Version:.*$/Version: ${VERSION}/" "${DATA_STAGING}/DEBIAN/control"
 # Depends must point at the real source package name
-sed -i "s|^Depends:.*|Depends: ${SOURCE_PKG} (= ${VERSION})|" "${DATA_STAGING}/DEBIAN/control"
+sed -i "s|^Depends:.*|Depends: ${SOURCE_PKG} (>= ${VERSION})|" "${DATA_STAGING}/DEBIAN/control"
 
 # Copy lifecycle scripts
 cp data-pkg/DEBIAN/postinst  "${DATA_STAGING}/DEBIAN/" 2>/dev/null || true
