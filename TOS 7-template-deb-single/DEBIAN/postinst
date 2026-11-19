@@ -6,9 +6,10 @@ APPID="myapp"
 APP_DIR="/usr/local/${APPID}"
 
 # Create runtime dirs; tolerate failure, suppress error log, do not block installation
-mkdir -p "/usr/local/${APPID}/data" "/usr/local/${APPID}/logs" 2>/dev/null || true
+# Note: /var/api must be created here if it's listed in ReadWritePaths in the .service file
+mkdir -p "/usr/local/${APPID}/data" "/usr/local/${APPID}/logs" "/var/api" 2>/dev/null || true
 
-# Set permissions
+# Set permissions (No longer needs /var/lib, completely clean)
 chown -R "${APPID}:${APPID}" "${APP_DIR}" 2>/dev/null || true
 
 # Decompress webui.bz2 if present
