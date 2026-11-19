@@ -4,6 +4,6 @@ Architecture: all
 Section: utils
 Priority: optional
 Maintainer: Your Name <your.email@example.com>
-Depends: myapp-source (= 1.0.0)
+Depends: myapp-source (>= 1.0.0)
 Description: Application data package - My Application
  TerraMaster App Center metadata package for My Application.
