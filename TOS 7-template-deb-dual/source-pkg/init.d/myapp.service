@@ -6,15 +6,14 @@ StartLimitIntervalSec=60
 
 [Service]
 Type=simple
-User=<appid>
-Group=<appid>
-WorkingDirectory=/usr/local/<appid>
-ExecStart=/usr/local/<appid>/bin/<appid>
-
+User=myapp
+Group=myapp
+WorkingDirectory=/usr/local/myapp
+ExecStart=/usr/local/myapp/bin/myapp
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/usr/local/<appid>/data /usr/local/<appid>/logs /var/api
+ReadWritePaths=/usr/local/myapp/data /usr/local/myapp/logs /var/api
 LimitNOFILE=65536
 
 [Install]
