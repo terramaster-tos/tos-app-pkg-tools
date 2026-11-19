@@ -432,7 +432,6 @@ Below is the config.ini standard template, divided into three independent exampl
   "height": 680,
   "help": "https://example.com/docs",
   "version": "1.0.0",
-  "recommend": false,
   "beta": false,
   "low_version": "TOS7.0",
   "category": ["Utilities"],
@@ -459,7 +458,6 @@ Below is the config.ini standard template, divided into three independent exampl
   "path": "http://${ip}:8686",
   "help": "https://example.com/docs",
   "version": "1.0.0",
-  "recommend": false,
   "beta": false,
   "low_version": "TOS7.0",
   "category": ["Utilities"],
@@ -484,7 +482,6 @@ Below is the config.ini standard template, divided into three independent exampl
   "exec": true,
   "help": "https://example.com/docs",
   "version": "1.0.0",
-  "recommend": false,
   "beta": false,
   "low_version": "TOS7.0",
   "category": ["Utilities"],
@@ -520,7 +517,6 @@ Below is the config.ini standard template, divided into three independent exampl
 | `height` | int | No | Default window height | Only effective when `open_path=false`. The height of the application page when opened, default 680. |
 | `help` | string | ✅ Yes | Help documentation URL | Help documentation, wiki, or community tutorial link of the application. **Required:** every submission must provide the application's help / documentation URL — it is one of the fields the platform validates for presence and non-emptiness (id / icon / publisher / exec / version / help / category / platform / application_type / user). Users rely on it to find usage documentation, so it must not be left empty. |
 | `version` | string | ✅ Yes | Application version number, displayed in the App Center | Must follow the 4.2 Version Number Specification (character rules, numeric comparability, and must be greater than the previously published version) — a specification requirement upheld at manual review: the platform's automated validation does not inspect version numbers at all (agent-api §6.5.6). A digits-and-dots value that increases with every release (e.g. `"1.0.0"`, `"2.3.1"`) also lets the App Center detect updates — see 4.2 Version Number Specification. |
-| `recommend` | bool | ✅ Yes | Whether the application is recommended | `recommend` — Recommendation flag, uniformly set by platform operations after review based on application quality. **Developers must always set this to `false` when submitting.** This field is managed by the platform; developers must not modify it to `true` on their own. |
 | `beta` | bool | ✅ Yes | Whether it is a beta version | `true` = beta version, only shown to test users; `false` = stable version, shown to all users. |
 | `low_version` | string | No | Minimum supported TOS version | Minimum supported TOS system version. Specifies the minimum TOS version on which the application can run normally. This is NOT the application's own version. **Optional:** leaving it empty is allowed and does not block submission; when provided it must be TOS 7.0 or higher. Use a plain numeric version in MAJOR.MINOR or MAJOR.MINOR.PATCH format (e.g. 7.0, 7.1); an empty value means the application declares no minimum TOS version. |
 | `category` | []string | ✅ Yes | Application categories | Up to 3 categories, selected from the official category list (see [Appendix A](20_Appendix.md#appendix-a-application-categories)). **The first category is the primary category** — it determines the default display section of the application. Arrange from most specific to most general. Exceeding the category limit results in rejection. |
