@@ -391,7 +391,7 @@ container logs                      # access with `docker logs`; do not read int
 #### 12.9.5 Key Runtime Guidelines
 
 1. **Do not write outside your own application directory.** `/etc`, `/boot`, and `/usr` locations other than `/usr/local/<appid>/` are protected by `ProtectSystem=strict`, and requesting write access to them is a permission red line (Section 10.9). Use `/usr/local/<appid>/data/` for writable configuration and state.
-2. **PrivateTmp=true is strictly forbidden. TOS uses `/var/api` (a symlink to `/tmp/api`) for platform proxy sockets. Enabling `PrivateTmp=true` isolates `/tmp` and causes `/var/api` to become a dangling symlink, preventing the application from creating its Unix socket. Use an application-owned data path (`/usr/local/<appid>/data/tmp/`) when files must survive restart or be shared across services.
+2. **PrivateTmp=true is strictly forbidden.** TOS uses `/var/api` (a symlink to `/tmp/api`) for platform proxy sockets. Enabling `PrivateTmp=true` isolates `/tmp` and causes `/var/api` to become a dangling symlink, preventing the application from creating its Unix socket. Use an application-owned data path (`/usr/local/<appid>/data/tmp/`) when files must survive restart or be shared across services.
 3. **`RuntimeDirectory` is conditional.** `/run/<appid>/` exists only when the unit declares `RuntimeDirectory=<appid>` (or the application creates an equivalent path). Do not list it as an unconditional runtime artifact.
 4. **Clean the socket before start.** iframe applications **must** run `rm -f /var/api/<appid>.sock` before binding; a stale socket from a previous run causes startup failure (see Section 13.4).
 5. **Rotate logs.** Configure logrotate for file-based logs (daily, keep 30, `copytruncate`) or rely on systemd journal (`journalctl -u <system_id>`) / the configured Docker logging driver.
@@ -421,7 +421,7 @@ Sections 12.9.1–12.9.5 describe paths that TOS, systemd, or App Center may cre
 **Rules for `/tmp`:**
 
 1. **Do not write directly to the shared system `/tmp`.** A path shared with other host processes cannot be audited or safely cleaned up by your `postrm`.
-2. Use one of two application-owned alternatives instead:
+2. Use the application-owned alternative instead:
    - `/usr/local/<appid>/data/tmp/` — an application-owned subdirectory on the data disk, for temp files that must survive a process restart (e.g., resumable downloads) or be inspected for debugging.
 3. **Clean up on startup.** Remove temp files left behind by a previous crash (for example `rm -f /usr/local/<appid>/data/tmp/*.part`) before creating new ones.
 4. **Bound temp file growth.** Document a maximum size or count for every temp path and enforce it in code; unbounded temp accumulation is not acceptable.
