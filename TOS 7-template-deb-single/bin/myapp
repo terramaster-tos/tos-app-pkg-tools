@@ -1,84 +1,48 @@
-#!/bin/bash
-# MyApp — Example TOS 7 backend service (Python)
-# This is a placeholder. Replace with your actual application.
-
-import socket
-import os
-import signal
-import sys
+#!/usr/bin/env python3
+import http.server
+import socketserver
 import json
-from http.server import HTTPServer, BaseHTTPRequestHandler
+import os
 
-APPID = "myapp"
-SOCKET_PATH = f"/var/api/{APPID}.sock"
-LISTEN_PORT = 8686  # Used for health checks
+# 必须使用平台指定的 Unix Socket 路径
+SOCKET_PATH = "/var/api/myapp.sock"
 
-class MyHandler(BaseHTTPRequestHandler):
+class MyHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == "/health":
+        if self.path == '/health':
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
+            self.send_header('Content-Type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps({"status": "ok"}).encode())
         else:
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
+            self.send_header('Content-Type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps({
-                "app": APPID,
-                "version": "1.0.0",
+                "app": "myapp", 
+                "version": "1.0.0", 
                 "message": "Hello from MyApp!"
             }).encode())
 
-    def do_OPTIONS(self):
-        # CORS preflight for platform proxy
-        self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Csrf-Token, Cookie")
-        self.send_header("Access-Control-Allow-Credentials", "true")
-        self.end_headers()
-
     def log_message(self, format, *args):
-        # Silence default logging; use structured logging instead
-        pass
+        pass # 关闭默认的每次请求打印，保持日志干净
 
-def cleanup():
-    """Remove old Unix Socket file."""
+if __name__ == '__main__':
+    # 确保父目录存在 (通常 /var/api 由 systemd 的 ReadWritePaths 保证，这里做个兜底)
+    os.makedirs(os.path.dirname(SOCKET_PATH), exist_ok=True)
+    
+    # 如果 socket 文件已存在，先清理
     if os.path.exists(SOCKET_PATH):
-        os.unlink(SOCKET_PATH)
+        os.remove(SOCKET_PATH)
 
-def handle_signal(signum, frame):
-    """Graceful shutdown."""
-    print(f"[{APPID}] Received signal {signum}, shutting down...")
-    cleanup()
-    sys.exit(0)
+    # 使用 UnixStreamServer 监听 Unix Socket
+    class ThreadingUnixStreamServer(socketserver.ThreadingMixIn, socketserver.UnixStreamServer):
+        daemon_threads = True
 
-def main():
-    # Ensure /var/api exists
-    os.makedirs("/var/api", exist_ok=True)
-
-    # Clean up old socket
-    if os.path.exists(SOCKET_PATH):
-        os.unlink(SOCKET_PATH)
-
-    # Set up signal handlers
-    signal.signal(signal.SIGTERM, handle_signal)
-    signal.signal(signal.SIGINT, handle_signal)
-
-    # Start HTTP server on Unix Socket
-    server = HTTPServer(SOCKET_PATH, MyHandler)
+    server = ThreadingUnixStreamServer(SOCKET_PATH, MyHandler)
+    
+    # 设置为应用用户权限 (防止 root 运行导致权限错误)
     os.chmod(SOCKET_PATH, 0o660)
-    # Set socket owner to match service user
-    try:
-        import pwd
-        pw = pwd.getpwnam(APPID)
-        os.chown(SOCKET_PATH, pw.pw_uid, pw.pw_gid)
-    except KeyError:
-        pass
-
-    print(f"[{APPID}] Listening on {SOCKET_PATH}")
+    
+    print(f"Server listening on {SOCKET_PATH}")
     server.serve_forever()
-
-if __name__ == "__main__":
-    main()
