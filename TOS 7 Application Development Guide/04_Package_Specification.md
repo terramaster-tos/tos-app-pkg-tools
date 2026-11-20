@@ -317,14 +317,14 @@ An application's footprint is divided into three categories that are treated dif
 | `/var/api/<appid>.sock` | Required for iframe apps; created by the application | Unix socket for platform proxy (mode `0660`) | Remove stale socket before bind and clean package-owned residue |
 | `/var/lib/<appid>/`, `/var/log/<appid>/` | Legacy compatibility paths; **not required**. The documented location for application state and logs is `/usr/local/<appid>/data` and `/usr/local/<appid>/logs` | App-specific state or logs | Delete only when package-owned and documented |
 | `/run/<appid>/` | Only with `RuntimeDirectory=<appid>` | PID files and runtime sockets | systemd-managed |
-| Service-private `/tmp` | Only with `PrivateTmp=true` | Isolated temporary files | systemd-managed; physical host path is internal |
+| Service-private /tmp | NOT RECOMMENDED: PrivateTmp=true breaks /var/api | Isolated temporary files | Do not use; conflicts with platform socket paths |
 | systemd enablement links | Platform/lifecycle script | Service boot registration | The unit must be placed under the application directory (`/usr/local/<appid>/init.d/`); `/etc/systemd/system` paths are not allowed |
 | `/Volume<N>/DockerAppData/<appid>/` | Docker apps | Persistent config & data volumes | Kept unless user chooses to remove volumes |
 
 **Key rules:**
 
 1. `/etc`, `/boot`, and `/usr` locations other than `/usr/local/<appid>/` are protected system directories. Third-party applications must not store writable application configuration there; use the application data directory `/usr/local/<appid>/data/`, which the platform resolves onto the data disk.
-2. `PrivateTmp=true` and `RuntimeDirectory=<appid>` create conditional systemd-managed runtime views. Do not document their paths as unconditional artifacts.
+2. PrivateTmp=true is strictly forbidden. Because TOS uses /var/api (a symlink to /tmp/api) for platform proxy sockets, enabling PrivateTmp=true will isolate the /tmp directory, causing /var/api to become a dangling symlink and preventing the application from creating its Unix socket. RuntimeDirectory=<appid> creates a conditional systemd-managed runtime view; do not document its path as an unconditional artifact.
 3. iframe applications must remove stale `/var/api/<appid>.sock` before binding.
 4. Never delete user data in `/Volume<N>/<appid>/` (Deb applications) or `/Volume<N>/DockerAppData/<appid>/` (Docker applications) on upgrade or uninstall. Delete runtime data only when its owner and retention policy are explicitly defined.
 5. Docker application persistence must use volume mounts, which the platform resolves to the application data root `/Volume<N>/DockerAppData/<appid>/`. Docker Engine's host-side data root is platform-managed and must not be hardcoded or described as a container path. Docker applications do not use TNAS shared folders.
