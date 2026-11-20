@@ -252,8 +252,9 @@ services:
 > **Recommended (strongly suggested):**
 > - `AmbientCapabilities` (only needed capabilities)
 > - `LimitNOFILE`, `LimitNPROC`
-> - `PrivateTmp=true`
 > - `PrivateDevices=true`
+>
+> ⚠️ **NOT ALLOWED:** Do NOT use `PrivateTmp=true`. It isolates `/tmp`, which breaks the `/var/api` symlink (pointing to `/tmp/api`), preventing your application from creating Unix sockets.
 >
 > **Optional (advanced hardening):**
 > - `PrivateNetwork=true` (only when network is not needed)
@@ -341,7 +342,7 @@ The following tree separates the TNAS application contract from optional impleme
 /var/lib/<appid>/                        # legacy compatibility path (not required); use /usr/local/<appid>/data/
 /var/log/<appid>/                        # legacy compatibility path (not required); use /usr/local/<appid>/logs/
 /run/<appid>/                            # only with RuntimeDirectory=<appid>
-service-private /tmp                     # only with PrivateTmp=true; physical host path is internal
+service-private /tmp                     # DO NOT USE: PrivateTmp=true breaks /var/api socket creation
 systemd journal                          # storage path is platform-managed; use journalctl
 ```
 
@@ -358,9 +359,9 @@ systemd journal                          # storage path is platform-managed; use
 | `/var/api/<appid>.sock` | Required for iframe apps | Application on start | Platform proxy Unix socket, mode `0660` | Application removes stale socket before bind; package removes residue when appropriate |
 | `/var/lib/<appid>/` | Legacy compatibility path — **not required**; use `/usr/local/<appid>/data/` instead | Lifecycle script/application | Application-specific state | Only delete if the same package owns and documents it |
 | `/var/log/<appid>/` | Legacy compatibility path — **not required**; use `/usr/local/<appid>/logs/` instead | Lifecycle script/application | Application-specific file logs | Rotate and remove only if package-owned |
-| `/run/<appid>/` | Conditional on `RuntimeDirectory=<appid>` | systemd | PID files and runtime sockets | systemd removes it when the unit stops |
-| Service-private `/tmp` | Conditional on `PrivateTmp=true` | systemd | Isolated temporary files | systemd manages the namespace; do not hardcode its host path |
-| systemd journal | Always available to the service | journald | stdout/stderr | Platform-managed; access with `journalctl -u <system_id>` |
+| /run/<appid>/ | Conditional on RuntimeDirectory=<appid> | systemd | PID files and runtime sockets | systemd removes it when the unit stops |
+| Service-private /tmp | NOT RECOMMENDED: PrivateTmp=true breaks /var/api | systemd | Isolated temporary files | Do not use; conflicts with platform socket paths |
+| systemd journal | Always available to the service | journald | stdout/stderr | Platform-managed; access with journalctl -u <system_id> |
 
 > **Service registration:** The service unit must live under the application directory (`/usr/local/<appid>/init.d/`); placing a unit under `/etc/systemd/system` is not allowed. `systemctl enable` creates an enablement link under the selected target (for example, `multi-user.target.wants/`) — do not hardcode that internal link location as application data.
 
@@ -390,7 +391,7 @@ container logs                      # access with `docker logs`; do not read int
 #### 12.9.5 Key Runtime Guidelines
 
 1. **Do not write outside your own application directory.** `/etc`, `/boot`, and `/usr` locations other than `/usr/local/<appid>/` are protected by `ProtectSystem=strict`, and requesting write access to them is a permission red line (Section 10.9). Use `/usr/local/<appid>/data/` for writable configuration and state.
-2. **`PrivateTmp=true` is conditional.** When enabled, the service receives an isolated `/tmp`; its physical host path is an implementation detail. Use an application-owned data path when files must survive restart or be shared across services.
+2. **PrivateTmp=true is strictly forbidden. TOS uses `/var/api` (a symlink to `/tmp/api`) for platform proxy sockets. Enabling `PrivateTmp=true` isolates `/tmp` and causes `/var/api` to become a dangling symlink, preventing the application from creating its Unix socket. Use an application-owned data path (`/usr/local/<appid>/data/tmp/`) when files must survive restart or be shared across services.
 3. **`RuntimeDirectory` is conditional.** `/run/<appid>/` exists only when the unit declares `RuntimeDirectory=<appid>` (or the application creates an equivalent path). Do not list it as an unconditional runtime artifact.
 4. **Clean the socket before start.** iframe applications **must** run `rm -f /var/api/<appid>.sock` before binding; a stale socket from a previous run causes startup failure (see Section 13.4).
 5. **Rotate logs.** Configure logrotate for file-based logs (daily, keep 30, `copytruncate`) or rely on systemd journal (`journalctl -u <system_id>`) / the configured Docker logging driver.
@@ -421,7 +422,6 @@ Sections 12.9.1–12.9.5 describe paths that TOS, systemd, or App Center may cre
 
 1. **Do not write directly to the shared system `/tmp`.** A path shared with other host processes cannot be audited or safely cleaned up by your `postrm`.
 2. Use one of two application-owned alternatives instead:
-   - `PrivateTmp=true` in the systemd unit — the service gets an isolated `/tmp` that systemd wipes automatically on stop (Section 12.9.5 #2); use it for short-lived temp files that do not need to survive a restart.
    - `/usr/local/<appid>/data/tmp/` — an application-owned subdirectory on the data disk, for temp files that must survive a process restart (e.g., resumable downloads) or be inspected for debugging.
 3. **Clean up on startup.** Remove temp files left behind by a previous crash (for example `rm -f /usr/local/<appid>/data/tmp/*.part`) before creating new ones.
 4. **Bound temp file growth.** Document a maximum size or count for every temp path and enforce it in code; unbounded temp accumulation is not acceptable.
@@ -447,9 +447,9 @@ Before submission, verify:
 - [ ] The service unit lives under the application directory (`/usr/local/<appid>/init.d/`) and is registered before `systemctl enable/start`; no `/etc/systemd/system` path is assumed
 - [ ] iframe services clean stale `/var/api/<appid>.sock` before binding
 - [ ] `/run/<appid>/` is documented only when `RuntimeDirectory=<appid>` is configured
-- [ ] Service-private `/tmp` is documented only when `PrivateTmp=true` is configured
+- [ ] `PrivateTmp=true` is NOT used (it breaks `/var/api` socket creation)
 - [ ] The application's own runtime file manifest (Section 12.9.6) is documented in README, listing every path it creates
-- [ ] The application never writes temp files directly to the shared system `/tmp`; it uses `PrivateTmp` or an app-owned `data/tmp/` directory, and cleans up stale temp files on start
+- [ ] The application never writes temp files directly to the shared system `/tmp`; it uses an app-owned `data/tmp/` directory, and cleans up stale temp files on start
 - [ ] Runtime-generated configuration lives under `data/`, never under `/etc` or the static package tree
 - [ ] File logs are written under `/usr/local/<appid>/logs/` (or a documented compatibility path) and rotated
 - [ ] `postrm` deletes only package-owned paths explicitly created by this application
