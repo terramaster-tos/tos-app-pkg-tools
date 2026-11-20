@@ -1304,6 +1304,15 @@ Description: Application data package - <App Name>
             └── init.d/
                 └── <system_id>.service
 ```
+---
+
+> ⚠️ **CRITICAL SYSTEMD UNIT CONSTRAINTS (MUST READ):**
+> 
+> When defining the `<system_id>.service` file inside the source package, strictly adhere to the following platform constraints to ensure the application can start and communicate properly:
+> 
+> 1. **Platform Critical Paths (`/var/api` and `/tmp/api`):** The platform uses `/var/api` to expose Unix sockets for WebUI Internal Open applications. In TOS, `/var/api` is symbolically linked to `/tmp/api`. These are critical system paths managed by the platform.
+> 2. **NEVER use `PrivateTmp=true`:** Do not set `PrivateTmp=true` in your systemd unit. Enabling this will isolate the `/tmp` directory for the service. Because `/var/api` is a symlink pointing to `/tmp/api`, `PrivateTmp=true` will cause the `/var/api` symlink to dangle (point to a non-existent or empty path). As a result, your application will fail to create the required Unix socket (`/var/api/<appid>.sock`), leading to service startup failure or proxy errors.
+> 3. **Required `ReadWritePaths`:** To allow the application to create the socket under `ProtectSystem=strict`, you must explicitly add `/var/api` to the `ReadWritePaths=` directive in the `[Service]` section of your unit file.
 
 ### 8.14 Lifecycle Scripts
 
