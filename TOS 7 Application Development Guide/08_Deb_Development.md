@@ -1304,7 +1304,6 @@ Description: Application data package - <App Name>
             └── init.d/
                 └── <system_id>.service
 ```
----
 
 > ⚠️ **CRITICAL SYSTEMD UNIT CONSTRAINTS (MUST READ):**
 > 
