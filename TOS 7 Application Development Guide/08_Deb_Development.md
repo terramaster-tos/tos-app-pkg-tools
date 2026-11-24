@@ -442,7 +442,7 @@ Below is the config.ini standard template, divided into three independent exampl
   "system_id": "dev-myapp",
   "package": "dev-myapp",
   "user": "dev-myapp",
-  "allow_open_in_mobile": false
+  "allow_open_in_mobile": false    // Set to true only if the app is responsive and its authentication works standalone in a mobile browser.
 }
 ```
 
@@ -468,7 +468,7 @@ Below is the config.ini standard template, divided into three independent exampl
   "system_id": "dev-myapp",
   "package": "dev-myapp",
   "user": "dev-myapp",
-  "allow_open_in_mobile": false
+  "allow_open_in_mobile": false   // Set to true only if the app is responsive and its authentication works standalone in a mobile browser.
 }
 ```
 
@@ -492,7 +492,7 @@ Below is the config.ini standard template, divided into three independent exampl
   "system_id": "dev-myapp",
   "package": "dev-myapp",
   "user": "dev-myapp",
-  "allow_open_in_mobile": false
+  "allow_open_in_mobile": false   // Set to true only if the app is responsive and its authentication works standalone in a mobile browser.
 }
 ```
 
