@@ -92,18 +92,26 @@ Practical rules:
 
 System permissions (SPC) govern what an **application** may do; application **page access** governs which TOS **user** may open it. The two are independent layers.
 
+> ⚠️ **Mandatory Authentication Requirement (TOS Login Enforcement):**
+> If your application requires authentication via the TOS system (i.e., forcing users to log in with their NAS credentials before accessing the app), **you MUST use the `.sock` access mode** (WebUI Internal Open or WebUI External Open with socket). 
+> 
+> The platform **cannot** enforce or intercept TOS authentication for applications using the **Port Listening mode** (see 8.3.2.1). Because port-mode traffic bypasses the TOS gateway, the platform cannot pop up a login window or validate the TOS session. If you choose port mode, you must implement your own independent authentication logic.
+
 | Situation | Behavior |
 |---|---|
 | Administrator | Can open the application page |
 | Non-administrator, not authorized | **Cannot** open the application page — the default state for every non-administrator user |
 | Non-administrator, authorized by an administrator | Can open the application page |
 
-Rules:
+**Rules:**
 
 1. A non-administrator TOS user has **no permission to open an application page by default**; an administrator can grant that user access to the application.
 2. A non-administrator user has **no permission for the App Center module** — the entry point is the **application icon on the desktop**, shown after the administrator has granted access. Do not assume the App Center is reachable for such users and do not design an entry that bypasses the platform.
 3. Authorization is per user and per application; being able to see an application in the App Center or on the desktop does **not** mean being allowed to open it.
-4. Authentication and denial handling in the application: a missing or expired session (`401`) sends the user to the TOS login page; an authenticated user without permission (`403`) is shown a "no permission" message and the application content must not be rendered (see 8.9 / 8.10). In the port access mode the platform cannot authenticate the page at all (see 8.3.2.1).
+4. **Authentication and denial handling in the application:**
+   - **In `.sock` mode (Platform-authenticated)**: A missing or expired session (`302` redirect) sends the user to the TOS login page; an authenticated user without permission (`403`) is shown a "no permission" message and the application content must not be rendered (see 8.9 / 8.10).
+   - **In Port access mode (Application-authenticated)**: Traffic does not pass through the TOS gateway. The platform cannot authenticate the page or intercept a `302`/`403` response. The application **MUST** implement its own access control (e.g., a custom login page) if security is required.
+
 
 ### 10.6 Shared Folder Access (Deb Applications)
 
