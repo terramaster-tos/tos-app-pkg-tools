@@ -284,7 +284,10 @@ For applications where the backend is a local executable service, the frontend i
 
 In this mode the application listens on its own port `<listen_port>` and the address published in `config.ini.path` is `http://${ip}:<port>`. **Every route is resolved by that port**: the application page itself and all of its functional requests are sent directly to `http://<ip>:<port>`, without passing through the platform.
 
-Because the traffic never traverses the platform proxy, **the platform cannot take part in authentication for this mode** — the platform session, the `Cookie` / `X-Csrf-Token` channel described in 8.9, and the platform permission model do **not** apply to the page served on the application port. The application itself must implement its own access control for that port (for example its own login or an explicit restriction to trusted networks); do not claim that the platform validates the session for a port-mode page.
+> ⚠️ **Authentication Limitation (TOS Login Bypassed):** 
+> Because traffic never traverses the platform proxy, **the platform cannot take part in authentication for this mode**. The platform session, the `Cookie` / `X-Csrf-Token` channel described in 8.9, and the platform permission model do **not** apply to the page served on the application port. 
+> 
+> If your application requires TOS system authentication (i.e., forcing users to log in with their NAS credentials), **you MUST NOT use port mode**. You must either switch to the `.sock` access mode (§8.3.2.2) or implement your own independent access control within the application (e.g., a custom login page).
 
 **Port Listening Rules:**
 - **Must not** occupy system reserved ports (22, 80, 443, 445, 3306, 5050, 5432, 6379, 8181, 8443) — full list: Appendix B of Chapter 20 / §12.8
@@ -297,7 +300,7 @@ In this mode the application service is exposed through the platform socket and 
 - **Page address:** `http://<ip>:8181/<app_id>/` — the application page is reached through the platform nginx on port 8181, which requires the nginx configuration file `nginx/<app_id>.conf` described below.
 - **API address:** application interfaces are reached through the platform function route `http://<ip>:8181/v2/proxy/<app_id>/`.
 - **`webui.bz2` is mandatory** in this mode: the frontend page archive is served by the platform.
-- **Platform authentication applies:** requests must carry the platform `Cookie` + `X-Csrf-Token` headers. This is the only compliant authentication channel; the full specification is in **8.9** (request path) and **8.10** (headers and session handling).
+- **Platform authentication applies:** requests must carry the platform `Cookie` + `X-Csrf-Token` headers. **This is the ONLY mode that automatically inherits TOS system authentication.** The full specification is in **8.9** (request path) and **8.10** (headers and session handling).
 
 **Nginx Configuration File Template:**
 
@@ -872,7 +875,7 @@ It must be compressed into `webui.bz2` for packaging, with the installation path
 
 ### 8.9 Frontend-Backend Request Specification
 
-> **Applicability:** this section applies to **WebUI Internal Open** (§8.3.1) and to the **WebUI External Open `.sock` access mode** (§8.3.2.2). It does **not** apply to the port listening mode (§8.3.2.1), whose traffic does not pass through the platform proxy — see the note on port mode below.
+> **Applicability (Authentication Scope):** this section applies to **WebUI Internal Open** (§8.3.1) and to the **WebUI External Open `.sock` access mode** (§8.3.2.2). It does **not** apply to the port listening mode (§8.3.2.1), whose traffic does not pass through the platform proxy. **TOS system authentication is only enforced in the modes covered by this section.** See the note on port mode below.
 
 When the frontend accesses the backend, it **must not directly access the socket file**. Requests must go through the platform HTTP proxy path:
 
@@ -925,7 +928,7 @@ The backend is recommended to be compatible with the following routes to avoid p
 
 ### 8.10 Frontend Authentication Header Specification
 
-> **Applicability:** this section applies to **WebUI Internal Open** (§8.3.1) and to the **WebUI External Open `.sock` access mode** (§8.3.2.2). It does **not** apply to the port listening mode (§8.3.2.1): that traffic does not pass through the platform proxy, so the platform does not authenticate it and the headers described here are not validated by the platform.
+> **Applicability (Authentication Scope):** this section applies to **WebUI Internal Open** (§8.3.1) and to the **WebUI External Open `.sock` access mode** (§8.3.2.2). It does **not** apply to the port listening mode (§8.3.2.1): that traffic does not pass through the platform proxy, so the platform does not authenticate it and the headers described here are not validated by the platform. If you use port mode, you must implement your own authentication headers and session handling.
 
 When the frontend sends backend requests, it must read the current website cookies.
 
